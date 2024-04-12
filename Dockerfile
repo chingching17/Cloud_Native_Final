@@ -6,10 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Set the working directory in the container
-WORKDIR /codeForDeploy
+WORKDIR /codeForDev
 
 # Copy the requirements file to the working directory
-COPY requirements.txt /codeForDeploy/
+COPY requirements.txt /codeForDev/
 
 # Install project dependencies
 RUN pip install --upgrade pip && pip install -r requirements.txt
