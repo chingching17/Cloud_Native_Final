@@ -1,0 +1,33 @@
+
+<style>
+    table {
+        font-size: 32px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+    }
+</style>
+
+<h1>歷史紀錄</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Request ID</th>
+            <th>Factory</th>
+            <th>Priority</th>
+            <th>Lab</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in results %}
+            <tr>
+                <td>{{ row.3}}</td>
+                <td>{{row.0}}</td>
+                <td>{{row.1}}</td>
+                <td>{{row.2}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
