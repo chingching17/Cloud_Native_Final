@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增訂單</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: #007BFF;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar a {
+            color: #fff;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-align: center;
+            margin: 0 10px;
+        }
+        .navbar a:hover {
+            background-color: #0056b3;
+        }
+        .form-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .form-group button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="manage">委託單管理</a>
+        <a href="add">新增委託單</a>
+        <a href="history">查詢歷史委託單</a>
+    </div>
+
+    <div class="form-container">
+        <h1>新增訂單</h1>
+        <form id="orderForm" method="post" action="/add_order/">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="factory">廠區</label>
+                <select id="factory" name="factory" required>
+                    <option value="Fab A">Fab A</option>
+                    <option value="Fab B">Fab B</option>
+                    <option value="Fac C">Fab C</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="priority">優先順序</label>
+                <select id="priority" name="priority" required>
+                    <option value="特急單">特急單</option>
+                    <option value="急單">急單</option>
+                    <option value="一般">一般</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="laboratory">實驗室</label>
+                <select id="laboratory" name="laboratory" required>
+                    <option value="化學實驗室">化學實驗室</option>
+                    <option value="表面分析實驗室">表面分析實驗室</option>
+                    <option value="成分分析實驗室">成分分析實驗室</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit">提交訂單</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
