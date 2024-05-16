@@ -7,7 +7,7 @@ def index(request):
     return render(request, 'index.html', {})
 
 def show_history(request):
-	query = f'SELECT  * from web_cn_require_info'
+	query = f'SELECT  * from web_cn_requirement_infos'
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
