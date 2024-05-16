@@ -56,3 +56,22 @@ def delete_order(request):
             return JsonResponse({'error': 'Request does not exist'}, status=404)
         except Exception as e:
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
+
+def complete_order(request):
+    if request.method == 'POST':
+
+        json_data = json.loads(request.body)
+        request_id = json_data.get('request_id')
+
+        try:
+            
+            request_to_complete = require_info.objects.get(req_id=request_id)
+            request_to_complete.status = '完成'
+            request_to_complete.save()
+
+            return redirect('/manage')
+
+        except require_info.DoesNotExist:
+            return JsonResponse({'error': 'Request does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)

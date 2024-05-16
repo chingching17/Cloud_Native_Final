@@ -59,7 +59,17 @@
     const csrfToken = '{{ csrf_token }}';
 
     function completeRequest(requestId) {
-        // Mark order complete
+        fetch('/complete_order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ request_id: requestId })
+        });
+
+        window.location.href = '/manage';
+        location.reload();
     }
 
     function deleteRequest(requestId) {
