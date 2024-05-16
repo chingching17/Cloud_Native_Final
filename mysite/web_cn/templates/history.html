@@ -9,6 +9,12 @@
     }
 </style>
 
+<div class="navbar">
+    <a href="manage">委託單管理</a>
+    <a href="add">新增委託單</a>
+    <a href="history">查詢歷史委託單</a>
+</div>
+
 <h1>歷史紀錄</h1>
 
 <table>
@@ -18,19 +24,19 @@
             <th>Factory</th>
             <th>Priority Type</th>
             <th>Lab</th>
-            <th>Current Priority</th>
             <th>Status</th>
+            <th>Attachment</th>
         </tr>
     </thead>
     <tbody>
         {% for row in results %}
             <tr>
-                <td>{{ row.0}}</td>
-                <td>{{row.1}}</td>
-                <td>{{row.2}}</td>
+                <td>{{row.0}}</td>
                 <td>{{row.3}}</td>
+                <td>{{row.2}}</td>
+                <td>{{row.1}}</td>
                 <td>{{row.4}}</td>
-                <td>{{row.5}}</td>
+                <td><a href="media/{{ row.5 }}" target="_blank">{{ row.5 }}</a></td>
             </tr>
         {% endfor %}
     </tbody>
