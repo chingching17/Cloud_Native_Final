@@ -32,9 +32,13 @@ def add_order(request):
         factory = request.POST.get('factory')
         priority = request.POST.get('priority')
         lab = request.POST.get('laboratory')
-        attachment = request.FILES['attachment']
-        
-        new_order = require_info(factory=factory, priority=priority, lab=lab, status='進行中', attachment=attachment)
+
+        if 'attachment' in request.FILES:
+            attachment = request.FILES['attachment']
+        else:
+            attachment = None
+
+        new_order = require_info(factory=factory, priority=priority, lab=lab, current_priority='1', status='進行中', attachment=attachment)
         new_order.save()
         return redirect('/add')
 

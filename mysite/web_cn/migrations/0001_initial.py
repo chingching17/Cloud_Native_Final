@@ -18,7 +18,9 @@ class Migration(migrations.Migration):
                 ('factory', models.CharField(max_length=5)),
                 ('priority', models.CharField(max_length=15)),
                 ('lab', models.CharField(max_length=20)),
-                ('status', models.CharField(max_length=10)),
+                ('current_priority', models.CharField(max_length=15)),
+                ('status', models.CharField(max_length=20)),
+                ('attachment', models.FileField(upload_to='attachments/', null=True, blank=True)),
             ],
         ),
     ]
