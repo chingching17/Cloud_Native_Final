@@ -68,7 +68,7 @@
 
     <div class="form-container">
         <h1>新增訂單</h1>
-        <form id="orderForm" method="post" action="/add_order/">
+        <form id="orderForm" method="post" action="/add_order/" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
                 <label for="factory">廠區</label>
@@ -93,6 +93,10 @@
                     <option value="表面分析實驗室">表面分析實驗室</option>
                     <option value="成分分析實驗室">成分分析實驗室</option>
                 </select>
+            </div>
+            <div class="form-group">
+                <label for="attachment">附件</label>
+                <input type="file" id="attachment" name="attachment">
             </div>
             <div class="form-group">
                 <button type="submit">提交訂單</button>

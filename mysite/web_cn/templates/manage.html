@@ -33,6 +33,7 @@
             <th>Priority</th>
             <th>Lab</th>
             <th>Status</th>
+            <th>Attachment</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -45,6 +46,7 @@
                     <td>{{ row.2 }}</td>
                     <td>{{ row.1 }}</td>
                     <td>{{ row.4 }}</td>
+                    <td><a href="media/{{ row.5 }}" target="_blank">{{ row.5 }}</a></td>
                     <td class="button-container">
                         <button onclick="completeRequest('{{ row.0 }}')">完成</button>
                         <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
