@@ -8,3 +8,4 @@ class require_info(models.Model):
     factory = models.CharField(max_length=5)
     priority = models.CharField(max_length=15)
     lab = models.CharField(max_length=20)
+    status = models.CharField(max_length=20)

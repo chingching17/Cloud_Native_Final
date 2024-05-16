@@ -32,21 +32,25 @@
             <th>Factory</th>
             <th>Priority</th>
             <th>Lab</th>
+            <th>Status</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for row in results %}
-            <tr>
-                <td>{{row.0}}</td>
-                <td>{{row.3}}</td>
-                <td>{{row.2}}</td>
-                <td>{{row.1}}</td>
-                <td class="button-container">
-                    <button onclick="completeRequest('{{ row.0 }}')">完成</button>
-                    <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
-                </td>
-            </tr>
+            {% if row.4 == '進行中' %}
+                <tr>
+                    <td>{{ row.0 }}</td>
+                    <td>{{ row.3 }}</td>
+                    <td>{{ row.2 }}</td>
+                    <td>{{ row.1 }}</td>
+                    <td>{{ row.4 }}</td>
+                    <td class="button-container">
+                        <button onclick="completeRequest('{{ row.0 }}')">完成</button>
+                        <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
+                    </td>
+                </tr>
+            {% endif %}
         {% endfor %}
     </tbody>
 </table>
