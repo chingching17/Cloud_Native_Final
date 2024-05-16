@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 from django.urls import reverse, resolve
 from web_cn.views import index, show_history, add, manage, add_order, delete_order, complete_order
 
+# test urls match views
 class TestUrls(SimpleTestCase):
 
     def test_index_url_is_resolved(self):
