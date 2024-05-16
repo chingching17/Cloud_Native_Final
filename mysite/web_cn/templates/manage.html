@@ -58,8 +58,8 @@
 <script>
     const csrfToken = '{{ csrf_token }}';
 
-    function completeRequest(requestId) {
-        fetch('/complete_order/', {
+    function fetchAndReload(url, requestId) {
+        fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -72,18 +72,12 @@
         location.reload();
     }
 
+
+    function completeRequest(requestId) {
+        fetchAndReload('/complete_order/', requestId);
+    }
+
     function deleteRequest(requestId) {
-
-        fetch('/delete_order/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ request_id: requestId })
-        });
-
-        window.location.href = '/manage';
-        location.reload();
+        fetchAndReload('/delete_order/', requestId);
     }
 </script>

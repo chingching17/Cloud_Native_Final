@@ -10,7 +10,7 @@ def index(request):
     return render(request, 'index.html', {})
 
 def show_history(request):
-	query = f'SELECT  * from web_cn_require_info'
+	query = f'SELECT  * from web_cn_require_info ORDER BY req_id'
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -20,7 +20,7 @@ def add(request):
     return render(request, 'add.html', {})
 
 def manage(request):
-	query = f'SELECT  * from web_cn_require_info'
+	query = f'SELECT  * from web_cn_require_info ORDER BY priority'
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
