@@ -3,3 +3,4 @@ from .models import *
 
 # Register your models here.
 admin.site.register(require_info)
+admin.site.register(requirement_infos)
