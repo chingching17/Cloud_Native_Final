@@ -1,0 +1,75 @@
+<style>
+    table {
+        font-size: 32px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+    }
+    .button-container {
+        display: flex;
+        justify-content: space-between;
+    }
+    .button-container button {
+        font-size: 24px;
+        padding: 4px 8px;
+        cursor: pointer;
+    }
+</style>
+
+<div class="navbar">
+    <a href="manage">委託單管理</a>
+    <a href="add">新增委託單</a>
+    <a href="history">查詢歷史委託單</a>
+</div>
+
+<h1>委託單管理</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Request ID</th>
+            <th>Factory</th>
+            <th>Priority</th>
+            <th>Lab</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in results %}
+            <tr>
+                <td>{{row.0}}</td>
+                <td>{{row.3}}</td>
+                <td>{{row.2}}</td>
+                <td>{{row.1}}</td>
+                <td class="button-container">
+                    <button onclick="completeRequest('{{ row.0 }}')">完成</button>
+                    <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+
+    function completeRequest(requestId) {
+        // Mark order complete
+    }
+
+    function deleteRequest(requestId) {
+
+        fetch('/delete_order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ request_id: requestId })
+        });
+
+        window.location.href = '/manage';
+        location.reload();
+    }
+</script>

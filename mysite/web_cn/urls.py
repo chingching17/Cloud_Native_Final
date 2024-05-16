@@ -5,5 +5,8 @@ urlpatterns = [
     path('',views.index, name='index'),
     path('history', views.show_history, name="show_history"),
     path('add', views.add, name='add'),
+    path('manage', views.manage, name='manage'),
+
     path('add_order/', views.add_order, name='add_order'),
+    path('delete_order/', views.delete_order, name='delete_order'),
 ]
