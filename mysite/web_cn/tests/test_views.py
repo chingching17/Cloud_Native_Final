@@ -1,10 +1,12 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, RequestFactory
 from django.urls import reverse
 from web_cn.models import require_info
 from django.db import connection
 import json
 from django.http import JsonResponse
 from unittest.mock import patch
+from web_cn.views import add_order
+from django.template.loader import render_to_string
 
 class TestViews(TestCase):
     def test_show_history(self):
@@ -35,7 +37,36 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'add.html')
     
+class AddOrderViewTest(TestCase):
 
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_add_order_post(self):
+        # Create a POST request with necessary data
+        data = {
+            'factory': 'ABC',
+            'priority': 'High',
+            'laboratory': 'Testing Lab',
+            # Simulate an attachment file
+            'attachment': 'test_file.txt'
+        }
+        request = self.factory.post(reverse('add_order'), data)
+        
+        # Attach FILES if any
+        request.FILES['attachment'] = 'test_file.txt'
+
+        # Call the view function
+        response = add_order(request)
+
+        # Check if a new order was created
+        self.assertEqual(require_info.objects.count(), 1)
+
+        # Check if the response redirects to '/add'
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/add')
+
+        
 
 class TestDeleteOrderView(TestCase):
     # 測試成功刪除訂單的情況
