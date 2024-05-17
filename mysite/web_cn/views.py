@@ -10,6 +10,10 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+
+
 
 # Create your views here.
 def index(request):
@@ -121,3 +125,12 @@ def login_view(request):
     # 查詢所有使用者
     users = User.objects.all().values_list('username', flat=True)
     return render(request, 'login.html', {'form': form, 'users': users})
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+@login_required
+def index(request):
+    return render(request, 'index.html', {'current_user': request.user})
