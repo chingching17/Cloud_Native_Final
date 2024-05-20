@@ -82,13 +82,12 @@ def complete_order(request):
 
         try:
             task = get_object_or_404(require_info, req_id=request_id)
-            if task.is_submitted and task.remaining_counts > 0:
-                task.remaining_counts -= 1
-                if task.remaining_counts == 0:
-                    task.status = '完成'
+            if task.is_submitted and not task.is_completed:
+                task.is_completed = True
+                task.status = '完成'
                 task.save()
 
-            return JsonResponse({'remaining_counts': task.remaining_counts, 'status': task.status})
+            return JsonResponse({'is_completed': task.is_completed, 'status': task.status})
 
         except require_info.DoesNotExist:
             return JsonResponse({'error': 'Request does not exist'}, status=404)

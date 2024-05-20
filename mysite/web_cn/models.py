@@ -11,5 +11,5 @@ class require_info(models.Model):
     current_priority = models.CharField(max_length=15)
     status = models.CharField(max_length=20)
     attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
-    remaining_counts = models.IntegerField(default=2)
+    is_completed = models.BooleanField(default=False)
     is_submitted = models.BooleanField(default=False)
