@@ -50,7 +50,8 @@
                     <td>{{ row.5 }}</td>
                     <td><a href="media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
                     <td class="button-container">
-                        <button onclick="completeRequest('{{ row.0 }}')">完成</button>
+                        <button onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
+                        <button onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button>
                         <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
                     </td>
                 </tr>
@@ -62,7 +63,7 @@
 <script>
     const csrfToken = '{{ csrf_token }}';
 
-    function fetchAndReload(url, requestId) {
+    function fetchAndReload(url, requestId, button) {
         fetch(url, {
             method: 'POST',
             headers: {
@@ -70,18 +71,35 @@
                 'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({ request_id: requestId })
-        });
-
-        window.location.href = '/manage';
-        location.reload();
+        }).then(response => response.json())
+          .then(data => {
+              if (url === '/complete_order/') {
+                  if (data.is_completed) {
+                      button.innerText = '允許';
+                      button.disabled = true;
+                  } else {
+                      alert(data.error);
+                  }
+              } else if (url === '/submit_order/') {
+                  if (data.is_submitted) {
+                      button.disabled = true;
+                      button.nextElementSibling.disabled = false;
+                  } else {
+                      alert(data.error);
+                  }
+              }
+          });
     }
 
+    function submitOrder(requestId, button) {
+        fetchAndReload('/submit_order/', requestId, button);
+    }
 
-    function completeRequest(requestId) {
-        fetchAndReload('/complete_order/', requestId);
+    function completeRequest(requestId, button) {
+        fetchAndReload('/complete_order/', requestId, button);
     }
 
     function deleteRequest(requestId) {
-        fetchAndReload('/delete_order/', requestId);
+        fetchAndReload('/delete_order/', requestId, null);
     }
 </script>
