@@ -12,6 +12,8 @@ from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -72,24 +74,26 @@ def delete_order(request):
         except Exception as e:
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
 
+@csrf_exempt
 def complete_order(request):
     if request.method == 'POST':
-
         json_data = json.loads(request.body)
         request_id = json_data.get('request_id')
 
         try:
-            
-            request_to_complete = require_info.objects.get(req_id=request_id)
-            request_to_complete.status = '完成'
-            request_to_complete.save()
+            task = get_object_or_404(require_info, req_id=request_id)
+            if task.is_submitted and task.remaining_counts > 0:
+                task.remaining_counts -= 1
+                if task.remaining_counts == 0:
+                    task.status = '完成'
+                task.save()
 
-            return redirect('/manage')
+            return JsonResponse({'remaining_counts': task.remaining_counts, 'status': task.status})
 
         except require_info.DoesNotExist:
             return JsonResponse({'error': 'Request does not exist'}, status=404)
         except Exception as e:
-            return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
+            return JsonResponse({'error': 'Error completing request: ' + str(e)}, status=500)
 
 # feat/2approval
 # login page and register page
@@ -134,3 +138,30 @@ def logout_view(request):
 @login_required
 def index(request):
     return render(request, 'index.html', {'current_user': request.user})
+
+def approve_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    if task.approval > 0:
+        task.approval -= 1
+        if task.approval == 0:
+            task.is_completed = True
+        task.save()
+    return JsonResponse({'approval': task.approval, 'is_completed': task.is_completed})
+
+@csrf_exempt
+def submit_order(request):
+    if request.method == 'POST':
+        json_data = json.loads(request.body)
+        request_id = json_data.get('request_id')
+
+        try:
+            task = get_object_or_404(require_info, req_id=request_id)
+            task.is_submitted = True
+            task.save()
+
+            return JsonResponse({'is_submitted': task.is_submitted})
+
+        except require_info.DoesNotExist:
+            return JsonResponse({'error': 'Request does not exist'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': 'Error submitting request: ' + str(e)}, status=500)
