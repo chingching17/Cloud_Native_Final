@@ -75,6 +75,7 @@ def delete_order(request):
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
 
 @csrf_exempt
+@login_required
 def complete_order(request):
     if request.method == 'POST':
         json_data = json.loads(request.body)
@@ -82,12 +83,17 @@ def complete_order(request):
 
         try:
             task = get_object_or_404(require_info, req_id=request_id)
-            if task.is_submitted and not task.is_completed:
+            if task.is_submitted and task.completed_by is None:
+                if task.submitted_by == request.user:
+                    return JsonResponse({'error': 'You cannot complete this task because you have already submitted it.'}, status=403)
                 task.is_completed = True
+                task.completed_by = request.user
                 task.status = '完成'
                 task.save()
 
-            return JsonResponse({'is_completed': task.is_completed, 'status': task.status})
+                return JsonResponse({'is_completed': task.is_completed, 'status': task.status})
+            else:
+                return JsonResponse({'error': 'This task cannot be completed yet.'}, status=403)
 
         except require_info.DoesNotExist:
             return JsonResponse({'error': 'Request does not exist'}, status=404)
@@ -148,6 +154,7 @@ def approve_task(request, task_id):
     return JsonResponse({'approval': task.approval, 'is_completed': task.is_completed})
 
 @csrf_exempt
+@login_required
 def submit_order(request):
     if request.method == 'POST':
         json_data = json.loads(request.body)
@@ -155,10 +162,16 @@ def submit_order(request):
 
         try:
             task = get_object_or_404(require_info, req_id=request_id)
-            task.is_submitted = True
-            task.save()
+            if task.submitted_by is None:
+                if task.completed_by == request.user:
+                    return JsonResponse({'error': 'You cannot submit this task because you have already completed it.'}, status=403)
+                task.is_submitted = True
+                task.submitted_by = request.user
+                task.save()
 
-            return JsonResponse({'is_submitted': task.is_submitted})
+                return JsonResponse({'is_submitted': task.is_submitted})
+            else:
+                return JsonResponse({'error': 'This task has already been submitted.'}, status=403)
 
         except require_info.DoesNotExist:
             return JsonResponse({'error': 'Request does not exist'}, status=404)

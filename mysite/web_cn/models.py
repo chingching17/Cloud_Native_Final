@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 # Create your models here.
 
 # create a model for todo list
@@ -13,3 +13,5 @@ class require_info(models.Model):
     attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
     is_completed = models.BooleanField(default=False)
     is_submitted = models.BooleanField(default=False)
+    submitted_by = models.ForeignKey(User, related_name='submitted_tasks', on_delete=models.SET_NULL, null=True, blank=True)
+    completed_by = models.ForeignKey(User, related_name='completed_tasks', on_delete=models.SET_NULL, null=True, blank=True)

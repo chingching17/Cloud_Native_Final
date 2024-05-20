@@ -77,11 +77,16 @@
                   if (data.is_completed) {
                       button.innerText = '完成';
                       button.disabled = true;
+                  } else {
+                      alert(data.error);
                   }
-                  location.reload();
               } else if (url === '/submit_order/') {
-                  button.disabled = true;
-                  button.nextElementSibling.disabled = false;
+                  if (data.is_submitted) {
+                      button.disabled = true;
+                      button.nextElementSibling.disabled = false;
+                  } else {
+                      alert(data.error);
+                  }
               }
           });
     }
