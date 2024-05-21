@@ -15,3 +15,4 @@ COPY requirements.txt /codeForDev/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copy the project code to the working directory
+COPY . /codeForDev/

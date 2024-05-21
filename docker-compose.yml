@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+    command: >
+      bash -c "cd mysite && python manage.py migrate &&
+               python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/codeForDev
+    ports:
+      - "8012:8000"
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
