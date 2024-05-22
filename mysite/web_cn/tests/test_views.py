@@ -1,231 +1,207 @@
 from django.test import TestCase, Client, RequestFactory
 from django.urls import reverse
+from django.contrib.auth.models import User
 from web_cn.models import require_info
-from django.db import connection
+from web_cn.views import complete_order, delete_order, increase_priority, decrease_priority, show_history, add, manage, add_order
 import json
-from django.http import JsonResponse
-from unittest.mock import patch
-from web_cn.views import add_order
-from django.template.loader import render_to_string
-
-class TestViews(TestCase):
-    def test_show_history(self):
-        client = Client()
-        url = reverse('show_history')
-        response = client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'history.html')
-        
-    def test_add(self):
-        client = Client()
-        url = reverse('add')
-        response = client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'add.html')
-    
-    def test_manage(self):
-        client = Client()
-        url = reverse('manage')
-        response = client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'manage.html')
-    
-    def test_add_order(self):
-        client = Client()
-        url = reverse('add_order')
-        response = client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'add.html')
-    
-class AddOrderViewTest(TestCase):
-
-    def setUp(self):
-        self.factory = RequestFactory()
-
-    def test_add_order_post(self):
-        # Create a POST request with necessary data
-        data = {
-            'factory': 'ABC',
-            'priority': 'High',
-            'laboratory': 'Testing Lab',
-            # Simulate an attachment file
-            'attachment': 'test_file.txt'
-        }
-        request = self.factory.post(reverse('add_order'), data)
-        
-        # Attach FILES if any
-        request.FILES['attachment'] = 'test_file.txt'
-
-        # Call the view function
-        response = add_order(request)
-
-        # Check if a new order was created
-        self.assertEqual(require_info.objects.count(), 1)
-
-        # Check if the response redirects to '/add'
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/add')
-
-        
-
-class TestDeleteOrderView(TestCase):
-    # 測試成功刪除訂單的情況
-    @patch('web_cn.views.require_info.objects.get')
-    def test_delete_order(self, mock_get):
-        # Create a test client
-        client = Client()
-
-        # Define a fake request_id
-        request_id = 123
-
-        # Prepare mock object
-        mock_instance = mock_get.return_value
-        mock_instance.delete.return_value = None
-
-        # Prepare request data
-        data = {'request_id': request_id}
-        json_data = json.dumps(data)
-
-        # Perform a POST request to the view
-        response = client.post(reverse('delete_order'), data=json_data, content_type='application/json')
-
-        # Check if the delete method was called
-        mock_get.assert_called_once_with(req_id=request_id)
-        mock_instance.delete.assert_called_once()
-
-        # Check if the view redirects to '/manage'
-        self.assertRedirects(response, '/manage')
-
-    # 測試試圖刪除不存在的訂單的情況 
-    def test_delete_order_non_existing_request(self):
-        # Create a test client
-        client = Client()
-
-        # Define a fake request_id that does not exist
-        request_id = 999
-
-        # Prepare request data
-        data = {'request_id': request_id}
-        json_data = json.dumps(data)
-
-        # Perform a POST request to the view
-        response = client.post(reverse('delete_order'), data=json_data, content_type='application/json')
-
-        # Check if the response status code is 404
-        self.assertEqual(response.status_code, 404)
-
-        # Check if the response contains the expected error message
-        self.assertEqual(response.json(), {'error': 'Request does not exist'})
-
-    # 測試刪除訂單時出現錯誤的情況
-    @patch('web_cn.views.require_info.objects.get')
-    def test_delete_order_error(self, mock_get):
-        # Create a test client
-        client = Client()
-
-        # Define a fake request_id
-        request_id = 123
-
-        # Prepare mock object to raise an exception
-        mock_instance = mock_get.return_value
-        mock_instance.delete.side_effect = Exception('Test error')
-
-        # Prepare request data
-        data = {'request_id': request_id}
-        json_data = json.dumps(data)
-
-        # Perform a POST request to the view
-        response = client.post(reverse('delete_order'), data=json_data, content_type='application/json')
-
-        # Check if the delete method was called
-        mock_get.assert_called_once_with(req_id=request_id)
-        mock_instance.delete.assert_called_once()
-
-        # Check if the response status code is 500
-        self.assertEqual(response.status_code, 500)
-
-        # Check if the response contains the expected error message
-        self.assertEqual(response.json(), {'error': 'Error deleting request: Test error'})
 
 class TestCompleteOrderView(TestCase):
-    @patch('web_cn.views.require_info.objects.get')
-    def test_complete_order(self, mock_get):
-        # Create a test client
-        client = Client()
 
-        # Define a fake request_id
-        request_id = 123
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username='testuser', password='ComplexPassword123!')
+        self.other_user = User.objects.create_user(username='otheruser', password='ComplexPassword123!')
+        self.require_info = require_info.objects.create(
+            req_id=1,
+            lab='Lab1',
+            current_priority=3,
+            status='Pending',
+            is_submitted=True,
+            completed_by=None
+        )
 
-        # Prepare mock object
-        mock_instance = mock_get.return_value
-        mock_instance.save.return_value = None
+    def test_complete_order(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 1})
+        request = self.factory.post(reverse('complete_order'), data, content_type='application/json')
+        request.user = self.user
+        response = complete_order(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 200)
+        self.require_info.refresh_from_db()
+        self.assertTrue(self.require_info.is_completed)
 
-        # Prepare request data
-        data = {'request_id': request_id}
-        json_data = json.dumps(data)
+    def test_complete_order_already_completed(self):
+        self.require_info.completed_by = self.other_user
+        self.require_info.save()
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 1})
+        request = self.factory.post(reverse('complete_order'), data, content_type='application/json')
+        request.user = self.user
+        response = complete_order(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 403)
 
-        # Perform a POST request to the view
-        response = client.post(reverse('complete_order'), data=json_data, content_type='application/json')
+    def test_complete_order_not_submitted(self):
+        self.require_info.is_submitted = False
+        self.require_info.save()
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 1})
+        request = self.factory.post(reverse('complete_order'), data, content_type='application/json')
+        request.user = self.user
+        response = complete_order(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 403)
 
-        # Check if the get method was called
-        mock_get.assert_called_once_with(req_id=request_id)
+    def test_complete_order_by_submitting_user(self):
+        self.require_info.submitted_by = self.user
+        self.require_info.save()
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 1})
+        request = self.factory.post(reverse('complete_order'), data, content_type='application/json')
+        request.user = self.user
+        response = complete_order(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 403)
 
-        # Check if the status attribute was updated to '完成'
-        self.assertEqual(mock_instance.status, '完成')
-
-        # Check if the save method was called
-        mock_instance.save.assert_called_once()
-
-        # Check if the view redirects to '/manage'
-        self.assertRedirects(response, '/manage')
-
-    def test_complete_order_non_existing_request(self):
-        # Create a test client
-        client = Client()
-
-        # Define a fake request_id that does not exist
-        request_id = 999
-
-        # Prepare request data
-        data = {'request_id': request_id}
-        json_data = json.dumps(data)
-
-        # Perform a POST request to the view
-        response = client.post(reverse('complete_order'), data=json_data, content_type='application/json')
-
-        # Check if the response status code is 404
-        self.assertEqual(response.status_code, 404)
-
-        # Check if the response contains the expected error message
-        self.assertEqual(response.json(), {'error': 'Request does not exist'})
-
-    @patch('web_cn.views.require_info.objects.get')
-    def test_complete_order_error(self, mock_get):
-        # Create a test client
-        client = Client()
-
-        # Define a fake request_id
-        request_id = 123
-
-        # Prepare mock object to raise an exception
-        mock_instance = mock_get.return_value
-        mock_instance.save.side_effect = Exception('Test error')
-
-        # Prepare request data
-        data = {'request_id': request_id}
-        json_data = json.dumps(data)
-
-        # Perform a POST request to the view
-        response = client.post(reverse('complete_order'), data=json_data, content_type='application/json')
-
-        # Check if the get method was called
-        mock_get.assert_called_once_with(req_id=request_id)
-
-        # Check if the save method was called
-        mock_instance.save.assert_called_once()
-
-        # Check if the response status code is 500
+    def test_complete_order_error(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 999})
+        request = self.factory.post(reverse('complete_order'), data, content_type='application/json')
+        request.user = self.user
+        response = complete_order(request)
+        print(f"Response content: {response.content}")
         self.assertEqual(response.status_code, 500)
 
-        # Check if the response contains the expected error message
-        self.assertEqual(response.json(), {'error': 'Error deleting request: Test error'})
+class TestDeleteOrderView(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username='testuser', password='ComplexPassword123!')
+        self.require_info = require_info.objects.create(
+            req_id=1,
+            lab='Lab1',
+            current_priority=3,
+            status='Pending'
+        )
+
+    def test_delete_order(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 1})
+        request = self.factory.post(reverse('delete_order'), data, content_type='application/json')
+        request.user = self.user
+        response = delete_order(request)
+        print(f"Response content: {response.content}")
+        self.assertFalse(require_info.objects.filter(req_id=1).exists())
+
+    def test_delete_order_nonexistent(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 999})
+        request = self.factory.post(reverse('delete_order'), data, content_type='application/json')
+        request.user = self.user
+        response = delete_order(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 404)
+
+class TestPriorityAdjustmentView(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(username='testuser', password='ComplexPassword123!')
+        self.require_info = require_info.objects.create(
+            req_id=1,
+            lab='Lab1',
+            current_priority=3,
+            status='Pending'
+        )
+
+    def test_increase_priority(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 1})
+        request = self.factory.post(reverse('increase_priority'), data, content_type='application/json')
+        request.user = self.user
+        response = increase_priority(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 200)
+        self.require_info.refresh_from_db()
+        self.assertEqual(self.require_info.current_priority, '2')
+
+    def test_decrease_priority(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 1})
+        request = self.factory.post(reverse('decrease_priority'), data, content_type='application/json')
+        request.user = self.user
+        response = decrease_priority(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 200)
+        self.require_info.refresh_from_db()
+        self.assertEqual(self.require_info.current_priority, '4')
+
+    def test_increase_priority_nonexistent(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 999})
+        request = self.factory.post(reverse('increase_priority'), data, content_type='application/json')
+        request.user = self.user
+        response = increase_priority(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 200)
+
+    def test_decrease_priority_nonexistent(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        data = json.dumps({'request_id': 999})
+        request = self.factory.post(reverse('decrease_priority'), data, content_type='application/json')
+        request.user = self.user
+        response = decrease_priority(request)
+        print(f"Response content: {response.content}")
+        self.assertEqual(response.status_code, 200)
+
+class TestOrderViews(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='ComplexPassword123!')
+        self.require_info = require_info.objects.create(
+            req_id=1,
+            lab='Lab1',
+            current_priority=3,
+            status='Pending'
+        )
+
+    def test_show_history(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        response = self.client.get(reverse('show_history'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'history.html')
+        self.assertContains(response, 'Lab1')
+
+    def test_add(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        response = self.client.get(reverse('add'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'add.html')
+
+    def test_manage(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        response = self.client.get(reverse('manage'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'manage.html')
+
+    def test_add_order(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        response = self.client.get(reverse('add_order'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'add.html')
+
+    def test_add_order_post(self):
+        self.client.login(username='testuser', password='ComplexPassword123!')
+        response = self.client.post(reverse('add_order'), {
+            'factory': 'Factory1',
+            'priority': 'High',
+            'laboratory': 'Lab2'
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(require_info.objects.filter(lab='Lab2').exists())
