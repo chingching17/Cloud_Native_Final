@@ -83,10 +83,11 @@ def decrease_priority(request):
         if not connection:
             return HttpResponseBadRequest("Database connection not available")
 
-        query = f"UPDATE web_cn_require_info SET current_priority = current_priority - 1 WHERE req_id = %s"
+        query = f"UPDATE web_cn_require_info SET current_priority = current_priority + 1 WHERE req_id = %s"
         with connection.cursor() as cursor:
             cursor.execute(query, (request_id,))
-        return redirect('/manage')
+        response_data = {'redirect_url': '/manage'}
+        return JsonResponse(response_data)
     
 def increase_priority(request):
     if request.method == 'POST':
@@ -97,11 +98,12 @@ def increase_priority(request):
         if not connection:
             return HttpResponseBadRequest("Database connection not available")
 
-        query = f"UPDATE web_cn_require_info SET current_priority = current_priority + 1 WHERE req_id = %s"
+        query = f"UPDATE web_cn_require_info SET current_priority = current_priority - 1 WHERE req_id = %s"
         with connection.cursor() as cursor:
             cursor.execute(query, (request_id,))
-        return redirect('/manage')
-    
+        response_data = {'redirect_url': '/manage'}
+        return JsonResponse(response_data)
+
 @csrf_exempt
 @login_required
 def complete_order(request):

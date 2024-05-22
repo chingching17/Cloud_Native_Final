@@ -118,10 +118,48 @@
     }
 
     function decreasePriority(requestId) {
-        fetchAndReload('/decrease_priority/', requestId, null);
+        fetch('/decrease_priority/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ request_id: requestId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 检查重定向 URL 是否存在
+            if (data.redirect_url) {
+                // 重定向到指定的 URL
+                window.location.href = data.redirect_url;
+            } else {
+                // 处理其他情况（如果有的话）
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
 
+
     function increasePriority(requestId) {
-        fetchAndReload('/increase_priority/', requestId, null);
+        fetch('/increase_priority/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ request_id: requestId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
 </script>
