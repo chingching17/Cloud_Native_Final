@@ -9,8 +9,18 @@
     .button-container {
         display: flex;
         justify-content: space-between;
+        align-items: center;
     }
     .button-container button {
+        font-size: 24px;
+        padding: 4px 8px;
+        cursor: pointer;
+    }
+    .button-cont {
+        display: flex;
+        justify-content: space-between;
+    }
+    .button-cont button {
         font-size: 24px;
         padding: 4px 8px;
         cursor: pointer;
@@ -36,6 +46,7 @@
             <th>Status</th>
             <th>Attachment</th>
             <th>Actions</th>
+            <th>Priority Adjustment</th>
         </tr>
     </thead>
     <tbody>
@@ -53,6 +64,10 @@
                         <button onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
                         <button onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button>
                         <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
+                    </td>
+                    <td class="button-container">
+                        <button onclick="decreasePriority('{{ row.0 }}')">降低優先序</button>
+                        <button onclick="increasePriority('{{ row.0 }}')">提高優先序</button>
                     </td>
                 </tr>
             {% endif %}
@@ -101,5 +116,13 @@
 
     function deleteRequest(requestId) {
         fetchAndReload('/delete_order/', requestId, null);
+    }
+
+    function decreasePriority(requestId) {
+        fetchAndReload('/decrease_priority/', requestId, null);
+    }
+
+    function increasePriority(requestId) {
+        fetchAndReload('/increase_priority/', requestId, null);
     }
 </script>
