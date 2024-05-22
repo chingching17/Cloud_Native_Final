@@ -32,7 +32,7 @@ def add(request):
     return render(request, 'add.html', {})
 
 def manage(request):
-	query = f'SELECT  * from web_cn_require_info ORDER BY priority'
+	query = f'SELECT  * from web_cn_require_info ORDER BY current_priority'
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -50,7 +50,7 @@ def add_order(request):
         else:
             attachment = None
 
-        new_order = require_info(factory=factory, priority=priority, lab=lab, current_priority='1', status='進行中', attachment=attachment)
+        new_order = require_info(factory=factory, priority=priority, lab=lab, current_priority=10, status='進行中', attachment=attachment)
         new_order.save()
         return redirect('/add')
 
@@ -74,6 +74,34 @@ def delete_order(request):
         except Exception as e:
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
 
+def decrease_priority(request):
+    if request.method == 'POST':
+
+        json_data = json.loads(request.body)
+        request_id = json_data.get('request_id')
+
+        if not connection:
+            return HttpResponseBadRequest("Database connection not available")
+
+        query = f"UPDATE web_cn_require_info SET current_priority = current_priority - 1 WHERE req_id = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, (request_id,))
+        return redirect('/manage')
+    
+def increase_priority(request):
+    if request.method == 'POST':
+
+        json_data = json.loads(request.body)
+        request_id = json_data.get('request_id')
+
+        if not connection:
+            return HttpResponseBadRequest("Database connection not available")
+
+        query = f"UPDATE web_cn_require_info SET current_priority = current_priority + 1 WHERE req_id = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, (request_id,))
+        return redirect('/manage')
+    
 @csrf_exempt
 @login_required
 def complete_order(request):

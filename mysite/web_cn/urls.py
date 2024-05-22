@@ -11,6 +11,10 @@ urlpatterns = [
     path('delete_order/', views.delete_order, name='delete_order'),
     path('complete_order/', views.complete_order, name='complete_order'),
 
+    # feat/priority adjustment
+    path('increase_priority/',views.increase_priority, name='increase_priority'),
+    path('decrease_priority/',views.decrease_priority, name='decrease_priority'),
+
     # feat/2approval
     # login page and register page
     path('register/', views.register, name='register'),
