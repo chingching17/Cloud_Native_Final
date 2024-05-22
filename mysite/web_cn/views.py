@@ -4,6 +4,8 @@ from django.contrib import messages
 from .models import require_info
 from django.http import JsonResponse
 import json
+from django.core.mail import send_mail
+from django.conf import settings
 
 # Create your views here.
 def index(request):
@@ -74,9 +76,24 @@ def complete_order(request):
             request_to_complete.status = '完成'
             request_to_complete.save()
 
+            send_notification(
+                email='youremail@example.com',
+                subject='Order Completed',
+                message=f'Order with ID {request_id} has been completed.'
+            )
+
             return redirect('/manage')
 
         except require_info.DoesNotExist:
             return JsonResponse({'error': 'Request does not exist'}, status=404)
         except Exception as e:
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
+        
+def send_notification(email, subject, message):
+    send_mail(
+        subject,
+        message,
+        settings.EMAIL_HOST_USER,
+        [email],
+        fail_silently=False,
+    )

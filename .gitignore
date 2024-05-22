@@ -3,3 +3,4 @@ __pycache*/
 init.sh
 media
 migrations
+.env
