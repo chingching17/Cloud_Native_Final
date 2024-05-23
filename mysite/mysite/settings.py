@@ -182,5 +182,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'django.server': {  # Adjust the level for basehttp logs
+            'handlers': ['file'],
+            'level': 'WARNING',  # Change this to WARNING to suppress INFO logs
+            'propagate': False,
+        },
     },
 }

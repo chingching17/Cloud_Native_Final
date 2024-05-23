@@ -69,7 +69,7 @@
                 <th>Message</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="logContent">
             {% for log in log_content %}
                 <tr>
                     <td>{{ log.level }}</td>
@@ -87,6 +87,34 @@
             urlParams.set('reverse', !reverseOrder);
             window.location.search = urlParams.toString();
         }
+
+        function fetchLogs() {
+            const urlParams = new URLSearchParams(window.location.search);
+            fetch('/logs/?' + urlParams.toString(), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const logContent = document.getElementById('logContent');
+                    logContent.innerHTML = '';
+                    data.forEach(log => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${log.level}</td>
+                            <td>${log.time}</td>
+                            <td>${log.module}</td>
+                            <td>${log.message}</td>
+                        `;
+                        logContent.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching logs:', error));
+        }
+
+        setInterval(fetchLogs, 1000);  // Fetch logs every 5 seconds
+        window.onload = fetchLogs;  // Fetch logs when the page loads
     </script>
 </body>
 </html>

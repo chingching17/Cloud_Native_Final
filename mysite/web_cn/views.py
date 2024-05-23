@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 import os
 import logging
+from django.http import JsonResponse
 
 logger = logging.getLogger('myapp')
 
@@ -133,29 +134,32 @@ def view_logs(request):
     log_file_path = os.path.join(settings.BASE_DIR, 'logs/debug.log')
     with open(log_file_path, 'r') as file:
         log_content = file.readlines()
-
+    
     search_query = request.GET.get('search', '')
     reverse_order = request.GET.get('reverse', 'false') == 'true'
+    
     if search_query:
         log_content = [line for line in log_content if search_query in line]
-
+    
     if reverse_order:
         log_content = log_content[::-1]
     
-    parsed_logs = []
-    for line in log_content:
-        parts = line.split(' ', 3)
+    log_entries = []
+    for log in log_content:
+        parts = log.split(' ', 3)  # Assuming log format: <LEVEL> <TIME> <MODULE> <MESSAGE>
         if len(parts) == 4:
-            level, date, time, rest = parts
-            module, message = rest.split(' ', 1)
-            parsed_logs.append({
-                'level': level,
-                'time': f"{date} {time}",
-                'module': module,
-                'message': message,
+            log_entries.append({
+                'level': parts[0],
+                'time': parts[1] + ' ' + parts[2],
+                'module': parts[3].split()[0],
+                'message': ' '.join(parts[3].split()[1:])
             })
-
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse(log_entries, safe=False)
+    
     return render(request, 'view_logs.html', {
-        'log_content': parsed_logs,
+        'log_content': log_entries,
         'search_query': search_query,
+        'reverse_order': reverse_order,
     })
