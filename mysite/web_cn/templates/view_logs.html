@@ -38,6 +38,16 @@
         .log-form {
             text-align: center;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .log-form input {
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -47,6 +57,7 @@
         <form method="get">
             <input type="text" name="search" placeholder="Search logs" value="{{ search_query }}">
             <button type="submit">Search</button>
+            <button type="button" id="reverseButton" onclick="reverseOrder()">⇅</button>
         </form>
     </div>
     <table class="log-container">
@@ -69,5 +80,13 @@
             {% endfor %}
         </tbody>
     </table>
+    <script>
+        function reverseOrder() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const reverseOrder = urlParams.get('reverse') === 'true';
+            urlParams.set('reverse', !reverseOrder);
+            window.location.search = urlParams.toString();
+        }
+    </script>
 </body>
 </html>

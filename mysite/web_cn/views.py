@@ -135,8 +135,12 @@ def view_logs(request):
         log_content = file.readlines()
 
     search_query = request.GET.get('search', '')
+    reverse_order = request.GET.get('reverse', 'false') == 'true'
     if search_query:
         log_content = [line for line in log_content if search_query in line]
+
+    if reverse_order:
+        log_content = log_content[::-1]
     
     parsed_logs = []
     for line in log_content:
