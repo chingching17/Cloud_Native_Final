@@ -9,7 +9,7 @@ from django.conf import settings
 import os
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('myapp')
 
 # Create your views here.
 def index(request):
@@ -41,31 +41,50 @@ def add_order(request):
 
         if 'attachment' in request.FILES:
             attachment = request.FILES['attachment']
+            logger.info("Attachment found in request.")
         else:
             attachment = None
+            logger.info("No attachment found in request.")
 
-        new_order = require_info(factory=factory, priority=priority, lab=lab, current_priority='1', status='進行中', attachment=attachment)
-        new_order.save()
-        return redirect('/add')
+        try:
+            new_order = require_info(
+                factory=factory,
+                priority=priority,
+                lab=lab,
+                current_priority='1',
+                status='進行中',
+                attachment=attachment
+            )
+            new_order.save()
+            logger.info(f"New order created: {new_order}")
+            return redirect('/add')
+        except Exception as e:
+            logger.error(f"Error creating new order: {str(e)}")
+            return render(request, 'add.html', {'error': 'Error creating new order.'})
 
     return render(request, 'add.html', {})
 
 def delete_order(request):
-    if request.method == 'POST':
 
+    logger.debug("delete_order function called")
+    if request.method == 'POST':
         json_data = json.loads(request.body)
         request_id = json_data.get('request_id')
+        logger.info(f"Request to delete order with ID: {request_id}")
 
         try:
             
             request_to_delete = require_info.objects.get(req_id=request_id)
             request_to_delete.delete()
+            logger.info(f"Order with ID {request_id} deleted successfully")
 
             return redirect('/manage')
 
         except require_info.DoesNotExist:
+            logger.warning(f"Order with ID {request_id} does not exist")
             return JsonResponse({'error': 'Request does not exist'}, status=404)
         except Exception as e:
+            logger.error(f"Error deleting order with ID {request_id}: {str(e)}")
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
 
 def complete_order(request):
@@ -85,22 +104,30 @@ def complete_order(request):
                 subject='Order Completed',
                 message=f'Order with ID {request_id} has been completed.'
             )
+            logger.info(f"Notification sent for order ID {request_id}")
 
             return redirect('/manage')
 
         except require_info.DoesNotExist:
+            logger.warning(f"Order with ID {request_id} does not exist")
             return JsonResponse({'error': 'Request does not exist'}, status=404)
         except Exception as e:
+            logger.error(f"Error completing order with ID {request_id}: {str(e)}")
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
         
 def send_notification(email, subject, message):
-    send_mail(
-        subject,
-        message,
-        settings.EMAIL_HOST_USER,
-        [email],
-        fail_silently=False,
-    )
+    logger.info(f"Sending email to {email} with subject '{subject}'")
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False,
+        )
+        logger.info(f"Email sent successfully to {email}")
+    except Exception as e:
+        logger.error(f"Error sending email to {email}: {str(e)}")
 
 def view_logs(request):
     log_file_path = os.path.join(settings.BASE_DIR, 'logs/debug.log')
