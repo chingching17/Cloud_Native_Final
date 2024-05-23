@@ -4,3 +4,4 @@ init.sh
 media
 migrations
 .env
+logs/

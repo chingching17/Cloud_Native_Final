@@ -6,6 +6,10 @@ from django.http import JsonResponse
 import json
 from django.core.mail import send_mail
 from django.conf import settings
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 def index(request):
@@ -97,3 +101,30 @@ def send_notification(email, subject, message):
         [email],
         fail_silently=False,
     )
+
+def view_logs(request):
+    log_file_path = os.path.join(settings.BASE_DIR, 'logs/debug.log')
+    with open(log_file_path, 'r') as file:
+        log_content = file.readlines()
+
+    search_query = request.GET.get('search', '')
+    if search_query:
+        log_content = [line for line in log_content if search_query in line]
+    
+    parsed_logs = []
+    for line in log_content:
+        parts = line.split(' ', 3)
+        if len(parts) == 4:
+            level, date, time, rest = parts
+            module, message = rest.split(' ', 1)
+            parsed_logs.append({
+                'level': level,
+                'time': f"{date} {time}",
+                'module': module,
+                'message': message,
+            })
+
+    return render(request, 'view_logs.html', {
+        'log_content': parsed_logs,
+        'search_query': search_query,
+    })

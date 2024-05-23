@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Logs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+        }
+        .log-container {
+            width: 80%;
+            margin: auto;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .log-container th, .log-container td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .log-container th {
+            background-color: #f2f2f2;
+        }
+        .log-container tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .log-container tr:hover {
+            background-color: #ddd;
+        }
+        .log-container th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        .log-form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Application Logs</h1>
+    <div class="log-form">
+        <form method="get">
+            <input type="text" name="search" placeholder="Search logs" value="{{ search_query }}">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+    <table class="log-container">
+        <thead>
+            <tr>
+                <th>Level</th>
+                <th>Time</th>
+                <th>Module</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in log_content %}
+                <tr>
+                    <td>{{ log.level }}</td>
+                    <td>{{ log.time }}</td>
+                    <td>{{ log.module }}</td>
+                    <td>{{ log.message }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
