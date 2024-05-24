@@ -1,0 +1,10 @@
+Django==4.0.2
+psycopg2-binary
+gunicorn
+pillow
+djangorestframework
+django-cors-headers
+django-environ
+celery
+redis
+coverage==6.0

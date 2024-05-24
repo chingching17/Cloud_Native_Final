@@ -9,8 +9,18 @@
     .button-container {
         display: flex;
         justify-content: space-between;
+        align-items: center;
     }
     .button-container button {
+        font-size: 24px;
+        padding: 4px 8px;
+        cursor: pointer;
+    }
+    .button-cont {
+        display: flex;
+        justify-content: space-between;
+    }
+    .button-cont button {
         font-size: 24px;
         padding: 4px 8px;
         cursor: pointer;
@@ -18,9 +28,9 @@
 </style>
 
 <div class="navbar">
-    <a href="manage">委託單管理</a>
-    <a href="add">新增委託單</a>
-    <a href="history">查詢歷史委託單</a>
+    <a href="/manage">委託單管理</a>
+    <a href="/add">新增委託單</a>
+    <a href="/history">查詢歷史委託單</a>
 </div>
 
 <h1>委託單管理</h1>
@@ -50,8 +60,13 @@
                     <td>{{ row.5 }}</td>
                     <td><a href="media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
                     <td class="button-container">
-                        <button onclick="completeRequest('{{ row.0 }}')">完成</button>
+                        <button onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
+                        <button onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button>
                         <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
+                    </td>
+                    <td class="button-container">
+                        <button onclick="decreasePriority('{{ row.0 }}')">降低優先序</button>
+                        <button onclick="increasePriority('{{ row.0 }}')">提高優先序</button>
                     </td>
                 </tr>
             {% endif %}
@@ -62,7 +77,7 @@
 <script>
     const csrfToken = '{{ csrf_token }}';
 
-    function fetchAndReload(url, requestId) {
+    function fetchAndReload(url, requestId, button) {
         fetch(url, {
             method: 'POST',
             headers: {
@@ -70,18 +85,81 @@
                 'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({ request_id: requestId })
-        });
-
-        window.location.href = '/manage';
-        location.reload();
+        }).then(response => response.json())
+          .then(data => {
+              if (url === '/complete_order/') {
+                  if (data.is_completed) {
+                      button.innerText = '允許';
+                      button.disabled = true;
+                  } else {
+                      alert(data.error);
+                  }
+              } else if (url === '/submit_order/') {
+                  if (data.is_submitted) {
+                      button.disabled = true;
+                      button.nextElementSibling.disabled = false;
+                  } else {
+                      alert(data.error);
+                  }
+              }
+          });
     }
 
+    function submitOrder(requestId, button) {
+        fetchAndReload('/submit_order/', requestId, button);
+    }
 
-    function completeRequest(requestId) {
-        fetchAndReload('/complete_order/', requestId);
+    function completeRequest(requestId, button) {
+        fetchAndReload('/complete_order/', requestId, button);
     }
 
     function deleteRequest(requestId) {
-        fetchAndReload('/delete_order/', requestId);
+        fetchAndReload('/delete_order/', requestId, null);
+    }
+
+    function decreasePriority(requestId) {
+        fetch('/decrease_priority/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ request_id: requestId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 检查重定向 URL 是否存在
+            if (data.redirect_url) {
+                // 重定向到指定的 URL
+                window.location.href = data.redirect_url;
+            } else {
+                // 处理其他情况（如果有的话）
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+
+    function increasePriority(requestId) {
+        fetch('/increase_priority/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ request_id: requestId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
 </script>
