@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.db import connection
 from django.contrib import messages
 from .models import require_info
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 import json
 
 from django.shortcuts import render, redirect
