@@ -16,6 +16,13 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
 
+from django.core.mail import send_mail
+from django.conf import settings
+import os
+import logging
+from django.http import JsonResponse
+
+logger = logging.getLogger('myapp')
 
 # Create your views here.
 def index(request):
@@ -47,31 +54,57 @@ def add_order(request):
 
         if 'attachment' in request.FILES:
             attachment = request.FILES['attachment']
+            logger.info("Attachment found in request.")
         else:
             attachment = None
+            logger.info("No attachment found in request.")
 
-        new_order = require_info(factory=factory, priority=priority, lab=lab, current_priority=10, status='進行中', attachment=attachment)
-        new_order.save()
-        return redirect('/add')
+        try:
+            new_order = require_info(
+                factory=factory,
+                priority=priority,
+                lab=lab,
+                current_priority='10',
+                status='進行中',
+                attachment=attachment
+            )
+            new_order.save()
+            logger.info(f"New order created: {new_order}")
+            return redirect('/add')
+        except Exception as e:
+            logger.error(f"Error creating new order: {str(e)}")
+            return render(request, 'add.html', {'error': 'Error creating new order.'})
 
     return render(request, 'add.html', {})
 
 def delete_order(request):
-    if request.method == 'POST':
 
+    logger.debug("delete_order function called")
+    if request.method == 'POST':
         json_data = json.loads(request.body)
         request_id = json_data.get('request_id')
+        logger.info(f"Request to delete order with ID: {request_id}")
 
         try:
-            
             request_to_delete = require_info.objects.get(req_id=request_id)
             request_to_delete.delete()
+            logger.info(f"Order with ID {request_id} deleted successfully")
+            
+            user_email = request.user.email
+
+            send_notification(
+                email=user_email,
+                subject='Order Deleted',
+                message=f'Order with ID {request_id} has been deleted.'
+            )
 
             return redirect('/manage')
 
         except require_info.DoesNotExist:
+            logger.warning(f"Order with ID {request_id} does not exist")
             return JsonResponse({'error': 'Request does not exist'}, status=404)
         except Exception as e:
+            logger.error(f"Error deleting order with ID {request_id}: {str(e)}")
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
 
 def decrease_priority(request):
@@ -121,14 +154,72 @@ def complete_order(request):
                 task.status = '完成'
                 task.save()
 
+                user_email = request.user.email
+
+                send_notification(
+                    email=user_email,
+                    subject='Order Completed',
+                    message=f'Order with ID {request_id} has been completed.'
+                )
+
                 return JsonResponse({'is_completed': task.is_completed, 'status': task.status})
             else:
                 return JsonResponse({'error': 'This task cannot be completed yet.'}, status=403)
 
         except require_info.DoesNotExist:
+            logger.warning(f"Order with ID {request_id} does not exist")
             return JsonResponse({'error': 'Request does not exist'}, status=404)
         except Exception as e:
-            return JsonResponse({'error': 'Error completing request: ' + str(e)}, status=500)
+            logger.error(f"Error completing order with ID {request_id}: {str(e)}")
+            return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
+        
+def send_notification(email, subject, message):
+    logger.info(f"Sending email to {email} with subject '{subject}'")
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            [email],
+            fail_silently=False,
+        )
+        logger.info(f"Email sent successfully to {email}")
+    except Exception as e:
+        logger.error(f"Error sending email to {email}: {str(e)}")
+
+def view_logs(request):
+    log_file_path = os.path.join(settings.BASE_DIR, 'logs/debug.log')
+    with open(log_file_path, 'r') as file:
+        log_content = file.readlines()
+    
+    search_query = request.GET.get('search', '')
+    reverse_order = request.GET.get('reverse', 'false') == 'true'
+    
+    if search_query:
+        log_content = [line for line in log_content if search_query in line]
+    
+    if reverse_order:
+        log_content = log_content[::-1]
+    
+    log_entries = []
+    for log in log_content:
+        parts = log.split(' ', 3)  # Assuming log format: <LEVEL> <TIME> <MODULE> <MESSAGE>
+        if len(parts) == 4:
+            log_entries.append({
+                'level': parts[0],
+                'time': parts[1] + ' ' + parts[2],
+                'module': parts[3].split()[0],
+                'message': ' '.join(parts[3].split()[1:])
+            })
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse(log_entries, safe=False)
+    
+    return render(request, 'view_logs.html', {
+        'log_content': log_entries,
+        'search_query': search_query,
+        'reverse_order': reverse_order,
+    })
 
 # feat/2approval
 # login page and register page
@@ -198,6 +289,14 @@ def submit_order(request):
                 task.is_submitted = True
                 task.submitted_by = request.user
                 task.save()
+
+                user_email = request.user.email
+
+                send_notification(
+                    email=user_email,
+                    subject='Order Submitted',
+                    message=f'Order with ID {request_id} has been submitted.'
+                )
 
                 return JsonResponse({'is_submitted': task.is_submitted})
             else:

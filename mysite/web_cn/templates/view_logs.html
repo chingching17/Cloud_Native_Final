@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Logs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+        }
+        .log-container {
+            width: 80%;
+            margin: auto;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .log-container th, .log-container td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .log-container th {
+            background-color: #f2f2f2;
+        }
+        .log-container tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .log-container tr:hover {
+            background-color: #ddd;
+        }
+        .log-container th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        .log-form {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .log-form input {
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Application Logs</h1>
+    <div class="log-form">
+        <form method="get">
+            <input type="text" name="search" placeholder="Search logs" value="{{ search_query }}">
+            <button type="submit">Search</button>
+            <button type="button" id="reverseButton" onclick="reverseOrder()">⇅</button>
+        </form>
+    </div>
+    <table class="log-container">
+        <thead>
+            <tr>
+                <th>Level</th>
+                <th>Time</th>
+                <th>Module</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody id="logContent">
+            {% for log in log_content %}
+                <tr>
+                    <td>{{ log.level }}</td>
+                    <td>{{ log.time }}</td>
+                    <td>{{ log.module }}</td>
+                    <td>{{ log.message }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        function reverseOrder() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const reverseOrder = urlParams.get('reverse') === 'true';
+            urlParams.set('reverse', !reverseOrder);
+            window.location.search = urlParams.toString();
+        }
+
+        function fetchLogs() {
+            const urlParams = new URLSearchParams(window.location.search);
+            fetch('/logs/?' + urlParams.toString(), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const logContent = document.getElementById('logContent');
+                    logContent.innerHTML = '';
+                    data.forEach(log => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${log.level}</td>
+                            <td>${log.time}</td>
+                            <td>${log.module}</td>
+                            <td>${log.message}</td>
+                        `;
+                        logContent.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching logs:', error));
+        }
+
+        setInterval(fetchLogs, 1000);  // Fetch logs every 5 seconds
+        window.onload = fetchLogs;  // Fetch logs when the page loads
+    </script>
+</body>
+</html>

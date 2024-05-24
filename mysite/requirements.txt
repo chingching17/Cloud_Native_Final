@@ -7,3 +7,4 @@ django-cors-headers
 django-environ
 celery
 redis
+coverage==6.0

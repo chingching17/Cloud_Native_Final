@@ -5,3 +5,4 @@ media
 migrations
 .env
 mysite/logs/
+.coverage
