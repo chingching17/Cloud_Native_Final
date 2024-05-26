@@ -15,12 +15,11 @@ from django.contrib.auth import logout
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
-
 from django.core.mail import send_mail
 from django.conf import settings
 import os
 import logging
-from django.http import JsonResponse
+from .tasks import send_notification
 
 logger = logging.getLogger('myapp')
 
@@ -172,20 +171,7 @@ def complete_order(request):
         except Exception as e:
             logger.error(f"Error completing order with ID {request_id}: {str(e)}")
             return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
-        
-def send_notification(email, subject, message):
-    logger.info(f"Sending email to {email} with subject '{subject}'")
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
-        )
-        logger.info(f"Email sent successfully to {email}")
-    except Exception as e:
-        logger.error(f"Error sending email to {email}: {str(e)}")
+
 
 def view_logs(request):
     log_file_path = os.path.join(settings.BASE_DIR, 'logs/debug.log')
