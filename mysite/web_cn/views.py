@@ -68,7 +68,7 @@ def add_order(request):
                 attachment=attachment
             )
             new_order.save()
-            logger.info(f"New order created: {new_order}")
+            logger.info(f"New order created: {new_order.req_id} by user {request.user.username}")
             return redirect('/add')
         except Exception as e:
             logger.error(f"Error creating new order: {str(e)}")
@@ -82,12 +82,12 @@ def delete_order(request):
     if request.method == 'POST':
         json_data = json.loads(request.body)
         request_id = json_data.get('request_id')
-        logger.info(f"Request to delete order with ID: {request_id}")
+        logger.info(f"User {request.user.username} requested to delete order with ID: {request_id}")
 
         try:
             request_to_delete = require_info.objects.get(req_id=request_id)
             request_to_delete.delete()
-            logger.info(f"Order with ID {request_id} deleted successfully")
+            logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
             
             user_email = request.user.email
 
@@ -109,32 +109,66 @@ def delete_order(request):
 def decrease_priority(request):
     if request.method == 'POST':
 
-        json_data = json.loads(request.body)
-        request_id = json_data.get('request_id')
+        try:
 
-        if not connection:
-            return HttpResponseBadRequest("Database connection not available")
+            json_data = json.loads(request.body)
+            request_id = json_data.get('request_id')
+            logger.info(f"User {request.user.username} requested to decrease priority for ID: {request_id}")
 
-        query = f"UPDATE web_cn_require_info SET current_priority = current_priority + 1 WHERE req_id = %s"
-        with connection.cursor() as cursor:
-            cursor.execute(query, (request_id,))
-        response_data = {'redirect_url': '/manage'}
-        return JsonResponse(response_data)
+            if not connection:
+                logger.error("Database connection not available")
+                return HttpResponseBadRequest("Database connection not available")
+
+            query = f"UPDATE web_cn_require_info SET current_priority = current_priority + 1 WHERE req_id = %s"
+            with connection.cursor() as cursor:
+                cursor.execute(query, (request_id,))
+                logger.info(f"User {request.user.username} successfully increased priority for ID: {request_id}")
+
+            response_data = {'redirect_url': '/manage'}
+            return JsonResponse(response_data)
+        
+        except json.JSONDecodeError:
+            logger.error("Error decoding JSON from request")
+            return HttpResponseBadRequest("Invalid JSON")
+        except Exception as e:
+            logger.error(f"Error processing decrease priority request: {str(e)}")
+            return HttpResponseBadRequest(f"Error: {str(e)}")
+        
+    else:
+        logger.warning("Invalid request method")
+        return HttpResponseBadRequest("Invalid request method")
     
 def increase_priority(request):
     if request.method == 'POST':
 
-        json_data = json.loads(request.body)
-        request_id = json_data.get('request_id')
+        try:
 
-        if not connection:
-            return HttpResponseBadRequest("Database connection not available")
+            json_data = json.loads(request.body)
+            request_id = json_data.get('request_id')
+            logger.info(f"User {request.user.username} requested to increase priority for ID: {request_id}")
 
-        query = f"UPDATE web_cn_require_info SET current_priority = current_priority - 1 WHERE req_id = %s"
-        with connection.cursor() as cursor:
-            cursor.execute(query, (request_id,))
-        response_data = {'redirect_url': '/manage'}
-        return JsonResponse(response_data)
+            if not connection:
+                logger.error("Database connection not available")
+                return HttpResponseBadRequest("Database connection not available")
+
+            query = f"UPDATE web_cn_require_info SET current_priority = current_priority - 1 WHERE req_id = %s"
+            with connection.cursor() as cursor:
+                cursor.execute(query, (request_id,))
+                logger.info(f"User {request.user.username} successfully increase priority for ID: {request_id}")
+
+            response_data = {'redirect_url': '/manage'}
+            return JsonResponse(response_data)
+        
+        except json.JSONDecodeError:
+            logger.error("Error decoding JSON from request")
+            return HttpResponseBadRequest("Invalid JSON")
+        except Exception as e:
+            logger.error(f"Error processing decrease priority request: {str(e)}")
+            return HttpResponseBadRequest(f"Error: {str(e)}")
+        
+    else:
+        logger.warning("Invalid request method")
+        return HttpResponseBadRequest("Invalid request method")
 
 @csrf_exempt
 @login_required
