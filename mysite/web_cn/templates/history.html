@@ -1,20 +1,73 @@
-
-<style>
-    table {
-        font-size: 32px;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 8px;
-    }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歷史紀錄</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: #007BFF;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar a {
+            color: #fff;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-align: center;
+            margin: 0 10px;
+        }
+        .navbar a:hover {
+            background-color: #0056b3;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 18px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .table-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
 
 <div class="navbar">
     <a href="/manage">委託單管理</a>
     <a href="/add">新增委託單</a>
-    <a href="/history">查詢歷史委託單</a>
 </div>
 
+<div class="table-container">
 <h1>歷史紀錄</h1>
 
 <table>
@@ -43,4 +96,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
+</body>
+</html>
