@@ -1,37 +1,91 @@
-<style>
-    table {
-        font-size: 32px;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 8px;
-    }
-    .button-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .button-container button {
-        font-size: 24px;
-        padding: 4px 8px;
-        cursor: pointer;
-    }
-    .button-cont {
-        display: flex;
-        justify-content: space-between;
-    }
-    .button-cont button {
-        font-size: 24px;
-        padding: 4px 8px;
-        cursor: pointer;
-    }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>委託單管理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .navbar {
+            background-color: #007BFF;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar a {
+            color: #fff;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-align: center;
+            margin: 0 10px;
+        }
+        .navbar a:hover {
+            background-color: #0056b3;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 18px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .button-container button {
+            font-size: 18px;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+        .button-container button:hover {
+            background-color: #0056b3;
+        }
+        .table-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
 
 <div class="navbar">
-    <a href="/manage">委託單管理</a>
     <a href="/add">新增委託單</a>
     <a href="/history">查詢歷史委託單</a>
 </div>
+
+<div class="table-container">
 
 <h1>委託單管理</h1>
 
@@ -73,6 +127,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 <script>
     const csrfToken = '{{ csrf_token }}';
@@ -86,23 +141,23 @@
             },
             body: JSON.stringify({ request_id: requestId })
         }).then(response => response.json())
-          .then(data => {
-              if (url === '/complete_order/') {
-                  if (data.is_completed) {
-                      button.innerText = '允許';
-                      button.disabled = true;
-                  } else {
-                      alert(data.error);
-                  }
-              } else if (url === '/submit_order/') {
-                  if (data.is_submitted) {
-                      button.disabled = true;
-                      button.nextElementSibling.disabled = false;
-                  } else {
-                      alert(data.error);
-                  }
-              }
-          });
+            .then(data => {
+                if (url === '/complete_order/') {
+                    if (data.is_completed) {
+                        button.innerText = '允許';
+                        button.disabled = true;
+                    } else {
+                        alert(data.error);
+                    }
+                } else if (url === '/submit_order/') {
+                    if (data.is_submitted) {
+                        button.disabled = true;
+                        button.nextElementSibling.disabled = false;
+                    } else {
+                        alert(data.error);
+                    }
+                }
+            });
     }
 
     function submitOrder(requestId, button) {
@@ -128,12 +183,8 @@
         })
         .then(response => response.json())
         .then(data => {
-            // 检查重定向 URL 是否存在
             if (data.redirect_url) {
-                // 重定向到指定的 URL
                 window.location.href = data.redirect_url;
-            } else {
-                // 处理其他情况（如果有的话）
             }
         })
         .catch(error => {
@@ -163,3 +214,5 @@
         });
     }
 </script>
+</body>
+</html>
