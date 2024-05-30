@@ -6,6 +6,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 import json
 
 from django.shortcuts import render, redirect
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
@@ -33,10 +34,19 @@ def show_history(request):
 		cursor.execute(query)
 		results = cursor.fetchall()
 
-	ongoing_count = sum(1 for row in results if row[5] == '進行中')
-	context = { 'results': results, 
+	paginator = Paginator(results, 10)
+	page = request.GET.get('page', 1)
+
+	try:
+		paginated_results = paginator.page(page)
+	except PageNotAnInteger:
+		paginated_results = paginator.page(1)
+	except EmptyPage:
+		paginated_results = paginator.page(paginator.num_pages)
+
+	context = { 'results': paginated_results, 
                 'total_count' : len(results),
-                'ongoing_count': ongoing_count}
+                'ongoing_count': sum(1 for row in results if row[5] == '進行中')}
 
 	return render(request, 'history.html', context)
 
@@ -49,7 +59,17 @@ def manage(request):
 		cursor.execute(query)
 		results = cursor.fetchall()
 
-	context = { 'results': results, 
+	paginator = Paginator(results, 10)
+	page = request.GET.get('page', 1)
+
+	try:
+		paginated_results = paginator.page(page)
+	except PageNotAnInteger:
+		paginated_results = paginator.page(1)
+	except EmptyPage:
+		paginated_results = paginator.page(paginator.num_pages)
+
+	context = { 'results': paginated_results, 
                 'fab_a_count' : sum(1 for row in results if row[1] == 'Fab A'),
                 'fab_b_count' : sum(1 for row in results if row[1] == 'Fab B'),
                 'fab_c_count' : sum(1 for row in results if row[1] == 'Fab C'),
@@ -97,19 +117,28 @@ def delete_order(request):
         request_id = json_data.get('request_id')
         logger.info(f"User {request.user.username} requested to delete order with ID: {request_id}")
 
-        request_to_delete = require_info.objects.get(req_id=request_id)
-        request_to_delete.delete()
-        logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
-        
-        user_email = request.user.email
+        try:
+            request_to_delete = require_info.objects.get(req_id=request_id)
+            request_to_delete.delete()
+            logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
+            
+            user_email = request.user.email
 
-        send_notification(
-            email=user_email,
-            subject='Order Deleted',
-            message=f'Order with ID {request_id} has been deleted.'
-        )
+            send_notification(
+                email=user_email,
+                subject='Order Deleted',
+                message=f'Order with ID {request_id} has been deleted.'
+            )
 
-        return redirect('/manage')
+            response_data = {'redirect_url': '/manage'}
+            return JsonResponse(response_data)
+
+        except require_info.DoesNotExist:
+            logger.warning(f"Order with ID {request_id} does not exist")
+            return JsonResponse({'error': 'Request does not exist'}, status=404)
+        except Exception as e:
+            logger.error(f"Error deleting order with ID {request_id}: {str(e)}")
+            return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
 
 def decrease_priority(request):
     if request.method == 'POST':
