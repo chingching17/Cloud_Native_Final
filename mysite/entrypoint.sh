@@ -8,5 +8,8 @@ done
 # Apply database migrations
 python manage.py migrate
 
+# Create superuser
+python manage.py createsuperuser --noinput
+
 # Start the Django server
 exec "$@"

@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysite-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysite
+  template:
+    metadata:
+      labels:
+        app: mysite
+    spec:
+      containers:
+      - name: mysite-container
+        image: ghcr.io/connie518/mysite:latest
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        env:
+          - name: DB_HOST
+            value: postgres-service
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_URL
+            value: "postgres://postgres:postgres@$(DB_HOST):5432/postgres"
+          - name: EMAIL_HOST
+            value: smtp
+          - name: EMAIL_PORT
+            value: "1025"
+          - name: EMAIL_USE_TLS
+            value: "False"
+          - name: EMAIL_HOST_USER
+            value: c51470086@gmail.com
+          - name: EMAIL_HOST_PASSWORD
+            value: xjyf dntz psxn fuvd
+          - name: DJANGO_SUPERUSER_USERNAME
+            value: admin
+          - name: DJANGO_SUPERUSER_EMAIL
+            value: admin@example.com
+          - name: DJANGO_SUPERUSER_PASSWORD
+            value: zzbc1234
+          - name: CELERY_BROKER_URL
+            value: redis://redis:6379/0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          volumeMounts:
+            - name: postgres-persistent-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-persistent-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery
+  template:
+    metadata:
+      labels:
+        app: celery
+    spec:
+      containers:
+        - name: celery-container
+          image: ghcr.io/connie518/mysite:latest
+          env:
+            - name: CELERY_BROKER_URL
+              value: redis://redis:6379/0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:latest
+        ports:
+        - containerPort: 6379
