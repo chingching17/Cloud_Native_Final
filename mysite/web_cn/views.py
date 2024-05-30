@@ -32,7 +32,13 @@ def show_history(request):
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
-	return render(request, 'history.html', {'results': results})
+
+	ongoing_count = sum(1 for row in results if row[5] == '進行中')
+	context = { 'results': results, 
+                'total_count' : len(results),
+                'ongoing_count': ongoing_count}
+
+	return render(request, 'history.html', context)
 
 def add(request):
     return render(request, 'add.html', {})
@@ -42,7 +48,14 @@ def manage(request):
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
-	return render(request, 'manage.html', {'results': results})
+
+	context = { 'results': results, 
+                'fab_a_count' : sum(1 for row in results if row[1] == 'Fab A'),
+                'fab_b_count' : sum(1 for row in results if row[1] == 'Fab B'),
+                'fab_c_count' : sum(1 for row in results if row[1] == 'Fab C'),
+                'ongoing_count': sum(1 for row in results if row[5] == '進行中')}
+
+	return render(request, 'manage.html', context)
 
 def add_order(request):
     if request.method == 'POST':
@@ -84,27 +97,19 @@ def delete_order(request):
         request_id = json_data.get('request_id')
         logger.info(f"User {request.user.username} requested to delete order with ID: {request_id}")
 
-        try:
-            request_to_delete = require_info.objects.get(req_id=request_id)
-            request_to_delete.delete()
-            logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
-            
-            user_email = request.user.email
+        request_to_delete = require_info.objects.get(req_id=request_id)
+        request_to_delete.delete()
+        logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
+        
+        user_email = request.user.email
 
-            send_notification(
-                email=user_email,
-                subject='Order Deleted',
-                message=f'Order with ID {request_id} has been deleted.'
-            )
+        send_notification(
+            email=user_email,
+            subject='Order Deleted',
+            message=f'Order with ID {request_id} has been deleted.'
+        )
 
-            return redirect('/manage')
-
-        except require_info.DoesNotExist:
-            logger.warning(f"Order with ID {request_id} does not exist")
-            return JsonResponse({'error': 'Request does not exist'}, status=404)
-        except Exception as e:
-            logger.error(f"Error deleting order with ID {request_id}: {str(e)}")
-            return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
+        return redirect('/manage')
 
 def decrease_priority(request):
     if request.method == 'POST':
