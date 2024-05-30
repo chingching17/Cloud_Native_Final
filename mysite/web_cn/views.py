@@ -1,52 +1,82 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.db import connection
 from django.contrib import messages
-from .models import require_info
-from django.http import JsonResponse, HttpResponseBadRequest
-import json
 
-from django.shortcuts import render, redirect
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
-from django.shortcuts import render, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.core.mail import send_mail
 from django.conf import settings
+from django.http import JsonResponse, HttpResponseBadRequest
+import json
 import os
 import logging
+from .models import require_info
+from .forms import CustomUserCreationForm
 from .tasks import send_notification
 
 logger = logging.getLogger('myapp')
 
 # Create your views here.
+@login_required
+def user_list(request):
+    users = User.objects.all().values('username', 'email')
+    return render(request, 'user_list.html', {'users': users})
+
+@csrf_protect
+def register(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            return redirect('index')  # Redirect to index or any other page
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'register.html', {'form': form})
+
+@csrf_protect
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('index')  # Redirect to index or any other page
+    else:
+        form = AuthenticationForm()
+
+    users = User.objects.all().values_list('username', flat=True)
+    return render(request, 'login.html', {'form': form, 'users': users})
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+@login_required
 def index(request):
     return render(request, 'index.html', {})
 
 def show_history(request):
-	query = f'SELECT  * from web_cn_require_info ORDER BY req_id'
+	query = 'SELECT * FROM web_cn_require_info ORDER BY req_id'
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
 
-	paginator = Paginator(results, 10)
-	page = request.GET.get('page', 1)
-
-	try:
-		paginated_results = paginator.page(page)
-	except PageNotAnInteger:
-		paginated_results = paginator.page(1)
-	except EmptyPage:
-		paginated_results = paginator.page(paginator.num_pages)
-
-	context = { 'results': paginated_results, 
+	ongoing_count = sum(1 for row in results if row[5] == '進行中')
+	context = { 'results': results, 
                 'total_count' : len(results),
-                'ongoing_count': sum(1 for row in results if row[5] == '進行中')}
+                'ongoing_count': ongoing_count}
 
 	return render(request, 'history.html', context)
 
@@ -54,22 +84,12 @@ def add(request):
     return render(request, 'add.html', {})
 
 def manage(request):
-	query = f'SELECT  * from web_cn_require_info ORDER BY current_priority'
+	query = 'SELECT * FROM web_cn_require_info ORDER BY current_priority'
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
 
-	paginator = Paginator(results, 10)
-	page = request.GET.get('page', 1)
-
-	try:
-		paginated_results = paginator.page(page)
-	except PageNotAnInteger:
-		paginated_results = paginator.page(1)
-	except EmptyPage:
-		paginated_results = paginator.page(paginator.num_pages)
-
-	context = { 'results': paginated_results, 
+	context = { 'results': results, 
                 'fab_a_count' : sum(1 for row in results if row[1] == 'Fab A'),
                 'fab_b_count' : sum(1 for row in results if row[1] == 'Fab B'),
                 'fab_c_count' : sum(1 for row in results if row[1] == 'Fab C'),
@@ -84,12 +104,13 @@ def add_order(request):
         priority = request.POST.get('priority')
         lab = request.POST.get('laboratory')
 
-        if 'attachment' in request.FILES:
-            attachment = request.FILES['attachment']
-            logger.info("Attachment found in request.")
-        else:
-            attachment = None
-            logger.info("No attachment found in request.")
+        # if 'attachment' in request.FILES:
+        #     attachment = request.FILES['attachment']
+        #     logger.info("Attachment found in request.")
+        # else:
+        #     attachment = None
+        #     logger.info("No attachment found in request.")
+        attachment = request.FILES.get('attachment')
 
         try:
             new_order = require_info(
@@ -117,28 +138,19 @@ def delete_order(request):
         request_id = json_data.get('request_id')
         logger.info(f"User {request.user.username} requested to delete order with ID: {request_id}")
 
-        try:
-            request_to_delete = require_info.objects.get(req_id=request_id)
-            request_to_delete.delete()
-            logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
-            
-            user_email = request.user.email
+        request_to_delete = require_info.objects.get(req_id=request_id)
+        request_to_delete.delete()
+        logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
+        
+        user_email = request.user.email
 
-            send_notification(
-                email=user_email,
-                subject='Order Deleted',
-                message=f'Order with ID {request_id} has been deleted.'
-            )
+        send_notification(
+            email=user_email,
+            subject='Order Deleted',
+            message=f'Order with ID {request_id} has been deleted.'
+        )
 
-            response_data = {'redirect_url': '/manage'}
-            return JsonResponse(response_data)
-
-        except require_info.DoesNotExist:
-            logger.warning(f"Order with ID {request_id} does not exist")
-            return JsonResponse({'error': 'Request does not exist'}, status=404)
-        except Exception as e:
-            logger.error(f"Error deleting order with ID {request_id}: {str(e)}")
-            return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
+        return redirect('/manage')
 
 def decrease_priority(request):
     if request.method == 'POST':
@@ -153,7 +165,7 @@ def decrease_priority(request):
                 logger.error("Database connection not available")
                 return HttpResponseBadRequest("Database connection not available")
 
-            query = f"UPDATE web_cn_require_info SET current_priority = current_priority + 1 WHERE req_id = %s"
+            query = "UPDATE web_cn_require_info SET current_priority = current_priority + 1 WHERE req_id = %s"
             with connection.cursor() as cursor:
                 cursor.execute(query, (request_id,))
                 logger.info(f"User {request.user.username} successfully increased priority for ID: {request_id}")
@@ -185,7 +197,7 @@ def increase_priority(request):
                 logger.error("Database connection not available")
                 return HttpResponseBadRequest("Database connection not available")
 
-            query = f"UPDATE web_cn_require_info SET current_priority = current_priority - 1 WHERE req_id = %s"
+            query = "UPDATE web_cn_require_info SET current_priority = current_priority - 1 WHERE req_id = %s"
             with connection.cursor() as cursor:
                 cursor.execute(query, (request_id,))
                 logger.info(f"User {request.user.username} successfully increase priority for ID: {request_id}")
@@ -275,58 +287,58 @@ def view_logs(request):
         'reverse_order': reverse_order,
     })
 
-# feat/2approval
-# login page and register page
-@csrf_protect
-def register(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username')
-            raw_password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=raw_password)
-            login(request, user)
-            return redirect('/register')  
-    else:
-        form = UserCreationForm()
-    return render(request, 'register.html', {'form': form})
+# # feat/2approval
+# # login page and register page
+# @csrf_protect
+# def register(request):
+#     if request.method == 'POST':
+#         form = UserCreationForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             username = form.cleaned_data.get('username')
+#             raw_password = form.cleaned_data.get('password1')
+#             user = authenticate(username=username, password=raw_password)
+#             login(request, user)
+#             return redirect('/register')  
+#     else:
+#         form = UserCreationForm()
+#     return render(request, 'register.html', {'form': form})
 
-@csrf_protect
-def login_view(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('/login')  # 導向首頁或其他頁面
-    else:
-        form = AuthenticationForm()
+# @csrf_protect
+# def login_view(request):
+#     if request.method == 'POST':
+#         form = AuthenticationForm(request, data=request.POST)
+#         if form.is_valid():
+#             username = form.cleaned_data.get('username')
+#             password = form.cleaned_data.get('password')
+#             user = authenticate(username=username, password=password)
+#             if user is not None:
+#                 login(request, user)
+#                 return redirect('/login')  # 導向首頁或其他頁面
+#     else:
+#         form = AuthenticationForm()
 
-    # 查詢所有使用者
-    users = User.objects.all().values_list('username', flat=True)
-    return render(request, 'login.html', {'form': form, 'users': users})
+#     # 查詢所有使用者
+#     users = User.objects.all().values_list('username', flat=True)
+#     return render(request, 'login.html', {'form': form, 'users': users})
 
-@login_required
-def logout_view(request):
-    logout(request)
-    return redirect('login')
+# @login_required
+# def logout_view(request):
+#     logout(request)
+#     return redirect('login')
 
-@login_required
-def index(request):
-    return render(request, 'index.html', {'current_user': request.user})
+# @login_required
+# def index(request):
+#     return render(request, 'index.html', {'current_user': request.user})
 
-def approve_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    if task.approval > 0:
-        task.approval -= 1
-        if task.approval == 0:
-            task.is_completed = True
-        task.save()
-    return JsonResponse({'approval': task.approval, 'is_completed': task.is_completed})
+# def approve_task(request, task_id):
+#     task = get_object_or_404(Task, id=task_id)
+#     if task.approval > 0:
+#         task.approval -= 1
+#         if task.approval == 0:
+#             task.is_completed = True
+#         task.save()
+#     return JsonResponse({'approval': task.approval, 'is_completed': task.is_completed})
 
 @csrf_exempt
 @login_required
