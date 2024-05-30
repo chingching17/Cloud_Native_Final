@@ -49,9 +49,11 @@ def manage(request):
 		cursor.execute(query)
 		results = cursor.fetchall()
 
-	ongoing_count = sum(1 for row in results if row[5] == '進行中')
 	context = { 'results': results, 
-                'ongoing_count': ongoing_count}
+                'fab_a_count' : sum(1 for row in results if row[1] == 'Fab A'),
+                'fab_b_count' : sum(1 for row in results if row[1] == 'Fab B'),
+                'fab_c_count' : sum(1 for row in results if row[1] == 'Fab C'),
+                'ongoing_count': sum(1 for row in results if row[5] == '進行中')}
 
 	return render(request, 'manage.html', context)
 
