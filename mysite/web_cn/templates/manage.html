@@ -173,6 +173,8 @@
 
     function deleteRequest(requestId) {
         fetchAndReload('/delete_order/', requestId, null);
+        window.location.href = '/manage';
+        location.reload();
     }
 
     function decreasePriority(requestId) {
