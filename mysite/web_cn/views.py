@@ -6,6 +6,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 import json
 
 from django.shortcuts import render, redirect
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
@@ -33,10 +34,19 @@ def show_history(request):
 		cursor.execute(query)
 		results = cursor.fetchall()
 
-	ongoing_count = sum(1 for row in results if row[5] == '進行中')
-	context = { 'results': results, 
+	paginator = Paginator(results, 10)
+	page = request.GET.get('page', 1)
+
+	try:
+		paginated_results = paginator.page(page)
+	except PageNotAnInteger:
+		paginated_results = paginator.page(1)
+	except EmptyPage:
+		paginated_results = paginator.page(paginator.num_pages)
+
+	context = { 'results': paginated_results, 
                 'total_count' : len(results),
-                'ongoing_count': ongoing_count}
+                'ongoing_count': sum(1 for row in results if row[5] == '進行中')}
 
 	return render(request, 'history.html', context)
 
@@ -49,7 +59,17 @@ def manage(request):
 		cursor.execute(query)
 		results = cursor.fetchall()
 
-	context = { 'results': results, 
+	paginator = Paginator(results, 10)
+	page = request.GET.get('page', 1)
+
+	try:
+		paginated_results = paginator.page(page)
+	except PageNotAnInteger:
+		paginated_results = paginator.page(1)
+	except EmptyPage:
+		paginated_results = paginator.page(paginator.num_pages)
+
+	context = { 'results': paginated_results, 
                 'fab_a_count' : sum(1 for row in results if row[1] == 'Fab A'),
                 'fab_b_count' : sum(1 for row in results if row[1] == 'Fab B'),
                 'fab_c_count' : sum(1 for row in results if row[1] == 'Fab C'),

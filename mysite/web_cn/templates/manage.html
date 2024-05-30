@@ -63,24 +63,52 @@
             font-size: 18px;
             padding: 6px 12px;
             cursor: pointer;
-            background-color: #007BFF;
-            color: #fff;
             border: none;
             border-radius: 4px;
             margin: 0 2px;
         }
-        .button-container button:hover {
+        .blue-button:hover {
             background-color: #0056b3;
+        }
+        .red-button {
+            background-color: #FF0000;
+            color: white;
+        }
+        .red-button:hover {
+            background-color: #8e0505;
+        }
+        .blue-button {
+            background-color: #007BFF;
+            color: white;
         }
         .table-container {
             max-width: 1200px;
             margin: 0 auto;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .pagination a {
+            color: #007BFF;
+            padding: 10px;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+        .pagination a:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        .count-row {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
 
 <div class="navbar">
+    <a href="/manage">委託單管理</a>
     <a href="/add">新增委託單</a>
     <a href="/history">查詢歷史委託單</a>
 </div>
@@ -94,9 +122,9 @@
         <tr>
             <th>Request ID</th>
             <th>Factory</th>
-            <th>Priority</th>
+            <th>Type</th>
             <th>Lab</th>
-            <th>Current Priority</th>
+            <th>Priority</th>
             <th>Status</th>
             <th>Attachment</th>
             <th>Actions</th>
@@ -114,14 +142,13 @@
                     <td>{{ row.5 }}</td>
                     <td><a href="media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
                     <td class="button-container">
-                        <button onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
-                        <button onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button>
-                        <button onclick="deleteRequest('{{ row.0 }}')">刪除</button>
+                        <button class="blue-button" onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
+                        <button class="blue-button" onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button>
+                        <button class="blue-button" onclick="decreasePriority('{{ row.0 }}')">降低優先序</button>
+                        <button class="blue-button" onclick="increasePriority('{{ row.0 }}')">提高優先序</button>
+                        <button class="red-button" onclick="deleteRequest('{{ row.0 }}')">刪除</button>
                     </td>
-                    <td class="button-container">
-                        <button onclick="decreasePriority('{{ row.0 }}')">降低優先序</button>
-                        <button onclick="increasePriority('{{ row.0 }}')">提高優先序</button>
-                    </td>
+                   
                 </tr>
             {% endif %}
         {% endfor %}
@@ -139,6 +166,20 @@
         </tr>
     </tbody>
 </table>
+
+<span>Page {{ results.number }} of {{ results.paginator.num_pages }}</span>
+<div class="pagination">
+    {% if results.has_previous %}
+        <a href="?page=1">&laquo; First</a>
+        <a href="?page={{ results.previous_page_number }}">&lsaquo; Previous</a>
+    {% endif %}
+    
+    {% if results.has_next %}
+        <a href="?page={{ results.next_page_number }}">Next &rsaquo;</a>
+        <a href="?page={{ results.paginator.num_pages }}">Last &raquo;</a>
+    {% endif %}
+</div>
+
 </div>
 
 <script>

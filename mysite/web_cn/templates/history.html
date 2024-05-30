@@ -58,6 +58,24 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .pagination a {
+            color: #007BFF;
+            padding: 10px;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+        .pagination a:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        .count-row {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -65,6 +83,7 @@
 <div class="navbar">
     <a href="/manage">委託單管理</a>
     <a href="/add">新增委託單</a>
+    <a href="/history">查詢歷史委託單</a>
 </div>
 
 <div class="table-container">
@@ -75,9 +94,9 @@
         <tr>
             <th>Request ID</th>
             <th>Factory</th>
-            <th>Priority Type</th>
+            <th>Type</th>
             <th>Lab</th>
-            <th>Current Priority</th>
+            <th>Priority</th>
             <th>Status</th>
             <th>Attachment</th>
         </tr>
@@ -85,23 +104,38 @@
     <tbody>
         {% for row in results %}
             <tr>
-                <td>{{row.0}}</td>
-                <td>{{row.3}}</td>
-                <td>{{row.2}}</td>
-                <td>{{row.1}}</td>
-                <td>{{row.4}}</td>
-                <td>{{row.5}}</td>
+                <td>{{ row.0 }}</td>
+                <td>{{ row.3 }}</td>
+                <td>{{ row.2 }}</td>
+                <td>{{ row.1 }}</td>
+                <td>{{ row.4 }}</td>
+                <td>{{ row.5 }}</td>
                 <td><a href="media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
             </tr>
         {% endfor %}
         <tr class="count-row">
-            <td colspan="9">進行中的單數: {{ ongoing_count }}</td>
+            <td colspan="7">進行中的單數: {{ ongoing_count }}</td>
         </tr>
         <tr class="count-row">
-            <td colspan="9">總筆數: {{ total_count }}</td>
+            <td colspan="7">總筆數: {{ total_count }}</td>
         </tr>
     </tbody>
 </table>
+
+<span>Page {{ results.number }} of {{ results.paginator.num_pages }}</span>
+
+<div class="pagination">
+    {% if results.has_previous %}
+        <a href="?page=1">&laquo; First</a>
+        <a href="?page={{ results.previous_page_number }}">&lsaquo; Previous</a>
+    {% endif %}
+    
+    {% if results.has_next %}
+        <a href="?page={{ results.next_page_number }}">Next &rsaquo;</a>
+        <a href="?page={{ results.paginator.num_pages }}">Last &raquo;</a>
+    {% endif %}
+</div>
+
 </div>
 
 </body>
