@@ -32,7 +32,13 @@ def show_history(request):
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
-	return render(request, 'history.html', {'results': results})
+
+	ongoing_count = sum(1 for row in results if row[5] == '進行中')
+	context = { 'results': results, 
+                'total_count' : len(results),
+                'ongoing_count': ongoing_count}
+
+	return render(request, 'history.html', context)
 
 def add(request):
     return render(request, 'add.html', {})
@@ -42,7 +48,12 @@ def manage(request):
 	with connection.cursor() as cursor:
 		cursor.execute(query)
 		results = cursor.fetchall()
-	return render(request, 'manage.html', {'results': results})
+
+	ongoing_count = sum(1 for row in results if row[5] == '進行中')
+	context = { 'results': results, 
+                'ongoing_count': ongoing_count}
+
+	return render(request, 'manage.html', context)
 
 def add_order(request):
     if request.method == 'POST':

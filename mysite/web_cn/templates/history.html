@@ -94,6 +94,12 @@
                 <td><a href="media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
             </tr>
         {% endfor %}
+        <tr class="count-row">
+            <td colspan="9">進行中的單數: {{ ongoing_count }}</td>
+        </tr>
+        <tr class="count-row">
+            <td colspan="9">總筆數: {{ total_count }}</td>
+        </tr>
     </tbody>
 </table>
 </div>
