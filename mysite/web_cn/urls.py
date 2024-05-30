@@ -21,6 +21,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('approve_task/<int:task_id>/', views.approve_task, name='approve_task'),
+    # path('approve_task/<int:task_id>/', views.approve_task, name='approve_task'),
     path('submit_order/', views.submit_order, name='submit_order'),
+    path('user_list/', views.user_list, name='user_list'),
 ]
