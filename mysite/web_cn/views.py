@@ -117,19 +117,28 @@ def delete_order(request):
         request_id = json_data.get('request_id')
         logger.info(f"User {request.user.username} requested to delete order with ID: {request_id}")
 
-        request_to_delete = require_info.objects.get(req_id=request_id)
-        request_to_delete.delete()
-        logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
-        
-        user_email = request.user.email
+        try:
+            request_to_delete = require_info.objects.get(req_id=request_id)
+            request_to_delete.delete()
+            logger.info(f"Order with ID {request_id} deleted successfully by user {request.user.username}")
+            
+            user_email = request.user.email
 
-        send_notification(
-            email=user_email,
-            subject='Order Deleted',
-            message=f'Order with ID {request_id} has been deleted.'
-        )
+            send_notification(
+                email=user_email,
+                subject='Order Deleted',
+                message=f'Order with ID {request_id} has been deleted.'
+            )
 
-        return redirect('/manage')
+            response_data = {'redirect_url': '/manage'}
+            return JsonResponse(response_data)
+
+        except require_info.DoesNotExist:
+            logger.warning(f"Order with ID {request_id} does not exist")
+            return JsonResponse({'error': 'Request does not exist'}, status=404)
+        except Exception as e:
+            logger.error(f"Error deleting order with ID {request_id}: {str(e)}")
+            return JsonResponse({'error': 'Error deleting request: ' + str(e)}, status=500)
 
 def decrease_priority(request):
     if request.method == 'POST':

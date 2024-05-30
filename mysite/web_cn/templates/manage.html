@@ -209,7 +209,10 @@
                     } else {
                         alert(data.error);
                     }
+                } else if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
                 }
+                window.location.reload();
             });
     }
 
@@ -221,52 +224,16 @@
         fetchAndReload('/complete_order/', requestId, button);
     }
 
-    function deleteRequest(requestId) {
+    async function deleteRequest(requestId) {
         fetchAndReload('/delete_order/', requestId, null);
-        window.location.href = '/manage';
-        location.reload();
     }
 
     function decreasePriority(requestId) {
-        fetch('/decrease_priority/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ request_id: requestId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.redirect_url) {
-                window.location.href = data.redirect_url;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        fetchAndReload('/decrease_priority/', requestId, null);
     }
 
-
     function increasePriority(requestId) {
-        fetch('/increase_priority/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ request_id: requestId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.redirect_url) {
-                window.location.href = data.redirect_url;
-            } else {
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        fetchAndReload('/increase_priority/', requestId, null);
     }
 </script>
 </body>
