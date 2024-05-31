@@ -281,6 +281,8 @@ def complete_order(request):
                 task.status = '完成'
                 task.save()
 
+                logger.info(f"Order with ID {request_id} is completed. (Approved by user {request.user.username})")
+                
                 user_email = request.user.email
 
                 send_notification(
@@ -364,6 +366,8 @@ def submit_order(request):
                 task.is_submitted = True
                 task.submitted_by = request.user
                 task.save()
+
+                logger.info(f"Order with ID {request_id} submitted by user {request.user.username}")
 
                 user_email = request.user.email
 
