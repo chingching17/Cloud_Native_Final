@@ -32,15 +32,24 @@ def group_members(request):
     chemistry_lab = Group.objects.filter(name='化學實驗室').first()
     surface_analysis_lab = Group.objects.filter(name='表面分析實驗室').first()
     composition_analysis_lab = Group.objects.filter(name='成分分析實驗室').first()
+    fab_a = Group.objects.filter(name='Fab A').first()
+    fab_b = Group.objects.filter(name='Fab B').first()
+    fab_c = Group.objects.filter(name='Fab C').first()
 
     chemistry_lab_users = chemistry_lab.user_set.all() if chemistry_lab else None
     surface_analysis_lab_users = surface_analysis_lab.user_set.all() if surface_analysis_lab else None
     composition_analysis_lab_users = composition_analysis_lab.user_set.all() if composition_analysis_lab else None
+    fab_a_users = fab_a.user_set.all() if fab_a else None
+    fab_b_users = fab_b.user_set.all() if fab_b else None
+    fab_c_users = fab_c.user_set.all() if fab_c else None
 
     return render(request, 'group_members.html', {
         'chemistry_lab_users': chemistry_lab_users,
         'surface_analysis_lab_users': surface_analysis_lab_users,
         'composition_analysis_lab_users': composition_analysis_lab_users,
+        'fab_a_users': fab_a_users,
+        'fab_b_users': fab_b_users,
+        'fab_c_users': fab_c_users,
     })
     
 @csrf_protect
@@ -49,10 +58,11 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            # username = form.cleaned_data.get('username')
-            # raw_password = form.cleaned_data.get('password1')
-            # user = authenticate(username=username, password=raw_password)
-            # login(request, user)
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            logout(request)
             return redirect('login')  # Redirect to index or any other page
     else:
         form = CustomUserCreationForm()
