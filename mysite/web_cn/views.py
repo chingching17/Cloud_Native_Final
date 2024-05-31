@@ -49,11 +49,11 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            username = form.cleaned_data.get('username')
-            raw_password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=raw_password)
-            login(request, user)
-            return redirect('index')  # Redirect to index or any other page
+            # username = form.cleaned_data.get('username')
+            # raw_password = form.cleaned_data.get('password1')
+            # user = authenticate(username=username, password=raw_password)
+            # login(request, user)
+            return redirect('login')  # Redirect to index or any other page
     else:
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
@@ -68,7 +68,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('index')  # Redirect to index or any other page
+                return redirect('manage')  # Redirect to index or any other page
     else:
         form = AuthenticationForm()
 
@@ -78,9 +78,9 @@ def login_view(request):
 @login_required
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect('index')
 
-@login_required
+# @login_required
 def index(request):
     return render(request, 'index.html', {})
 
