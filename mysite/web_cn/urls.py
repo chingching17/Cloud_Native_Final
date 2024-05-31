@@ -24,4 +24,5 @@ urlpatterns = [
     # path('approve_task/<int:task_id>/', views.approve_task, name='approve_task'),
     path('submit_order/', views.submit_order, name='submit_order'),
     path('user_list/', views.user_list, name='user_list'),
+    path('group_members/', views.group_members, name='group_members'),
 ]

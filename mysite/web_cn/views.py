@@ -5,7 +5,7 @@ from django.contrib import messages
 
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
@@ -24,9 +24,25 @@ logger = logging.getLogger('myapp')
 # Create your views here.
 @login_required
 def user_list(request):
-    users = User.objects.all().values('username', 'email')
+    users = User.objects.all().values('username', 'email', 'groups__name')
     return render(request, 'user_list.html', {'users': users})
 
+@login_required
+def group_members(request):
+    chemistry_lab = Group.objects.filter(name='化學實驗室').first()
+    surface_analysis_lab = Group.objects.filter(name='表面分析實驗室').first()
+    composition_analysis_lab = Group.objects.filter(name='成分分析實驗室').first()
+
+    chemistry_lab_users = chemistry_lab.user_set.all() if chemistry_lab else None
+    surface_analysis_lab_users = surface_analysis_lab.user_set.all() if surface_analysis_lab else None
+    composition_analysis_lab_users = composition_analysis_lab.user_set.all() if composition_analysis_lab else None
+
+    return render(request, 'group_members.html', {
+        'chemistry_lab_users': chemistry_lab_users,
+        'surface_analysis_lab_users': surface_analysis_lab_users,
+        'composition_analysis_lab_users': composition_analysis_lab_users,
+    })
+    
 @csrf_protect
 def register(request):
     if request.method == 'POST':
@@ -253,6 +269,10 @@ def complete_order(request):
 
         try:
             task = get_object_or_404(require_info, req_id=request_id)
+
+            if task.lab not in [group.name for group in request.user.groups.all()]:
+                return JsonResponse({'error': 'You are not authorized to complete this order.'}, status=403)
+
             if task.is_submitted and task.completed_by is None:
                 if task.submitted_by == request.user:
                     return JsonResponse({'error': 'You cannot complete this task because you have already submitted it.'}, status=403)
@@ -316,49 +336,6 @@ def view_logs(request):
     })
 
 # # feat/2approval
-# # login page and register page
-# @csrf_protect
-# def register(request):
-#     if request.method == 'POST':
-#         form = UserCreationForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             username = form.cleaned_data.get('username')
-#             raw_password = form.cleaned_data.get('password1')
-#             user = authenticate(username=username, password=raw_password)
-#             login(request, user)
-#             return redirect('/register')  
-#     else:
-#         form = UserCreationForm()
-#     return render(request, 'register.html', {'form': form})
-
-# @csrf_protect
-# def login_view(request):
-#     if request.method == 'POST':
-#         form = AuthenticationForm(request, data=request.POST)
-#         if form.is_valid():
-#             username = form.cleaned_data.get('username')
-#             password = form.cleaned_data.get('password')
-#             user = authenticate(username=username, password=password)
-#             if user is not None:
-#                 login(request, user)
-#                 return redirect('/login')  # 導向首頁或其他頁面
-#     else:
-#         form = AuthenticationForm()
-
-#     # 查詢所有使用者
-#     users = User.objects.all().values_list('username', flat=True)
-#     return render(request, 'login.html', {'form': form, 'users': users})
-
-# @login_required
-# def logout_view(request):
-#     logout(request)
-#     return redirect('login')
-
-# @login_required
-# def index(request):
-#     return render(request, 'index.html', {'current_user': request.user})
-
 # def approve_task(request, task_id):
 #     task = get_object_or_404(Task, id=task_id)
 #     if task.approval > 0:
@@ -377,9 +354,13 @@ def submit_order(request):
 
         try:
             task = get_object_or_404(require_info, req_id=request_id)
+
+            if task.lab not in [group.name for group in request.user.groups.all()]:
+                return JsonResponse({'error': 'You are not authorized to submit this order.'}, status=403)
+
             if task.submitted_by is None:
-                if task.completed_by == request.user:
-                    return JsonResponse({'error': 'You cannot submit this task because you have already completed it.'}, status=403)
+                # if task.completed_by == request.user:
+                #     return JsonResponse({'error': 'You cannot submit this task because you have already completed it.'}, status=403)
                 task.is_submitted = True
                 task.submitted_by = request.user
                 task.save()

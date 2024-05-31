@@ -142,8 +142,10 @@
                     <td>{{ row.5 }}</td>
                     <td><a href="media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
                     <td class="button-container">
-                        <button class="blue-button" onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
-                        <button class="blue-button" onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button>
+                        <!-- <button class="blue-button" onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
+                        <button class="blue-button" onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button> -->
+                        <button class="blue-button" onclick="submitOrder('{{ row.0 }}')">送出</button>
+                        <button class="blue-button" onclick="completeRequest('{{ row.0 }}')">允許</button>
                         <button class="blue-button" onclick="decreasePriority('{{ row.0 }}')">降低優先序</button>
                         <button class="blue-button" onclick="increasePriority('{{ row.0 }}')">提高優先序</button>
                         <button class="red-button" onclick="deleteRequest('{{ row.0 }}')">刪除</button>
