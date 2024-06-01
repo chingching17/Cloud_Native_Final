@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import datetime
 # Create your models here.
 
 # create a model for todo list
@@ -15,3 +16,4 @@ class require_info(models.Model):
     is_submitted = models.BooleanField(default=False)
     submitted_by = models.ForeignKey(User, related_name='submitted_tasks', on_delete=models.SET_NULL, null=True, blank=True)
     completed_by = models.ForeignKey(User, related_name='completed_tasks', on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(default=datetime.datetime.now)

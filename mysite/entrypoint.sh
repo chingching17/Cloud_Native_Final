@@ -6,6 +6,7 @@ while ! nc -z $DB_HOST $DB_PORT; do
 done
 
 # Apply database migrations
+python manage.py makemigrations
 python manage.py migrate
 
 # Create superuser
