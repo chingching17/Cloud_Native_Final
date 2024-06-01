@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: mysite-container
-        image: ghcr.io/connie518/mysite:latest
+        image: ghcr.io/kuenway/mysite:latest
         ports:
         - containerPort: 8000
         resources:
@@ -111,7 +111,7 @@ spec:
     spec:
       containers:
         - name: celery-container
-          image: ghcr.io/connie518/mysite:latest
+          image: ghcr.io/kuenway/mysite:latest
           env:
             - name: CELERY_BROKER_URL
               value: redis://redis:6379/0
@@ -135,3 +135,77 @@ spec:
         image: redis:latest
         ports:
         - containerPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+        env:
+          - name: GF_PATHS_PROVISIONING
+            value: /etc/grafana/provisioning
+          - name: GF_AUTH_ANONYMOUS_ENABLED
+            value: "true"
+          - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+            value: Admin
+          - name: GF_SERVER_ROOT_URL
+            value: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+          - name: GF_SERVER_SERVE_FROM_SUB_PATH
+            value: "true"
+        volumeMounts:
+          - name: grafana-storage
+            mountPath: /var/lib/grafana
+          - name: grafana-provisioning
+            mountPath: /etc/grafana/provisioning
+      volumes:
+        - name: grafana-storage
+          persistentVolumeClaim:
+            claimName: grafana-pvc
+        - name: grafana-provisioning
+          configMap:
+            name: grafana-provisioning
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provisioning
+data:
+  ds.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: PostgreSQL
+        type: postgres
+        access: proxy 
+        orgId: 1
+        url: http://postgres-service:5432
+        database: postgres
+        user: postgres
+        password: postgres
+        isDefault: true
+        version: 1
+        editable: false
