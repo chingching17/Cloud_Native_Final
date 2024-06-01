@@ -72,6 +72,7 @@
             background-color: #0056b3;
         }
     </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 
@@ -129,5 +130,36 @@
             </div>
         </form>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#orderForm').on('submit', function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: "{% url 'add_order' %}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Order added successfully');
+                            window.location.href = "/add";
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        if (xhr.status === 403) {
+                            alert('You are not authorized to add an order.');
+                        } else {
+                            alert('An error occurred: ' + xhr.responseText);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

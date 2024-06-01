@@ -147,6 +147,12 @@ def manage(request):
 
 def add_order(request):
     if request.method == 'POST':
+        user_groups = request.user.groups.values_list('name', flat=True)
+        allowed_groups = {'Fab A', 'Fab B', 'Fab C'}
+
+        if not allowed_groups.intersection(user_groups):
+            messages.error(request, "You are not authorized to add an order.")
+            return JsonResponse({'error': 'You are not authorized to add an order.'}, status=403)
 
         factory = request.POST.get('factory')
         priority = request.POST.get('priority')
@@ -170,12 +176,13 @@ def add_order(request):
             )
             new_order.save()
             logger.info(f"New order created: {new_order.req_id} by user {request.user.username}")
-            return redirect('/add')
+            return JsonResponse({'success': True}, status=201)
         except Exception as e:
             logger.error(f"Error creating new order: {str(e)}")
-            return render(request, 'add.html', {'error': 'Error creating new order.'})
+            return JsonResponse({'error': 'Error creating new order.'}, status=500)
 
     return render(request, 'add.html', {})
+
 
 def delete_order(request):
 
@@ -282,7 +289,7 @@ def complete_order(request):
         try:
             task = get_object_or_404(require_info, req_id=request_id)
 
-            if task.lab not in [group.name for group in request.user.groups.all()]:
+            if task.factory not in [group.name for group in request.user.groups.all()]:
                 return JsonResponse({'error': 'You are not authorized to complete this order.'}, status=403)
 
             if task.is_submitted and task.completed_by is None:
@@ -373,8 +380,6 @@ def submit_order(request):
                 return JsonResponse({'error': 'You are not authorized to submit this order.'}, status=403)
 
             if task.submitted_by is None:
-                # if task.completed_by == request.user:
-                #     return JsonResponse({'error': 'You cannot submit this task because you have already completed it.'}, status=403)
                 task.is_submitted = True
                 task.submitted_by = request.user
                 task.save()
