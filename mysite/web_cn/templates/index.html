@@ -1,9 +1,61 @@
-{% load static %}
+<!DOCTYPE html>
+<html>
 <head>
-    <link rel="stylesheet" type="text/css" href="{% static 'website/style.css' %}"
+    <title>HomePage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .btn {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .btn a {
+            color: #333;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-align: center;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        .btn a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
-
-<h1>Homepage</h1>
-<h2></h2>
-
-<!-- write a table -->
+<body>
+    <div class="container">
+        <h2>Lab Requirements Management</h2>
+        <div class="btn"><a href="/login">登入</a></div>
+        <div class="btn"><a href="/register">註冊</a></div>
+    </div>
+</body>
+</html>

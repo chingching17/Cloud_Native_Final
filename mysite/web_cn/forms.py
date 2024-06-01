@@ -8,6 +8,9 @@ class CustomUserCreationForm(UserCreationForm):
         ('化學實驗室', '化學實驗室'),
         ('表面分析實驗室', '表面分析實驗室'),
         ('成分分析實驗室', '成分分析實驗室'),
+        ('Fab A', 'Fab A'),
+        ('Fab B', 'Fab B'),
+        ('Fab C', 'Fab C'),
     ]
     group = forms.ChoiceField(choices=group_choices)
 
