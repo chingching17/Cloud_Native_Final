@@ -120,9 +120,11 @@ def add(request):
     return render(request, 'add.html', {})
 
 def manage(request):
-	query = 'SELECT * FROM web_cn_require_info ORDER BY current_priority'
+	query = "SELECT * FROM web_cn_require_info WHERE status = %s ORDER BY current_priority"
+	status = '進行中'
+
 	with connection.cursor() as cursor:
-		cursor.execute(query)
+		cursor.execute(query, [status])
 		results = cursor.fetchall()
 
 	paginator = Paginator(results, 10)
