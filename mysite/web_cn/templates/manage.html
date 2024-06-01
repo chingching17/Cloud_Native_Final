@@ -160,12 +160,12 @@
             {% if row.5 == '進行中' %}
                 <tr>
                     <td>{{ row.0 }}</td>
-                    <td>{{ row.3 }}</td>
-                    <td>{{ row.2 }}</td>
                     <td>{{ row.1 }}</td>
+                    <td>{{ row.2 }}</td>
+                    <td>{{ row.3 }}</td>
                     <td>{{ row.4 }}</td>
                     <td>{{ row.5 }}</td>
-                    <td><a href="media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
+                    <td><a href="/media/{{ row.6 }}" target="_blank">{{ row.6 }}</a></td>
                     <td class="button-container">
                         <!-- <button class="blue-button" onclick="submitOrder('{{ row.0 }}', this)" {% if row.7 %}disabled{% endif %}>送出</button>
                         <button class="blue-button" onclick="completeRequest('{{ row.0 }}', this)" {% if not row.7 or row.8 %}disabled{% endif %}>允許</button> -->
