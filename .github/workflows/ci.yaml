@@ -1,1 +1,42 @@
+name: CI
 
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Set up Docker Compose
+      run: |
+        docker-compose build
+        docker-compose up -d
+
+    - name: Wait for services to be ready
+      run: |
+        # Adjust the sleep time as needed to ensure services are ready
+        sleep 5
+
+    - name: Run migrations and tests with coverage
+      run: |
+        docker-compose exec -T web python manage.py makemigrations
+        docker-compose exec -T web python manage.py migrate
+    
+    - name: Generate Coverage Report
+      run: |
+        docker-compose exec -T web coverage run --source='.' manage.py test web_cn
+        docker-compose exec -T web coverage report
+      working-directory: ./mysite
+
+    - name: Tear down Docker Compose
+      run: docker-compose down

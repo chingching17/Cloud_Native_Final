@@ -9,7 +9,7 @@ class require_info(models.Model):
     factory = models.CharField(max_length=5)
     priority = models.CharField(max_length=15)
     lab = models.CharField(max_length=20)
-    current_priority = models.IntegerField()
+    current_priority = models.IntegerField(default=35)
     status = models.CharField(max_length=20)
     attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
     is_completed = models.BooleanField(default=False)
