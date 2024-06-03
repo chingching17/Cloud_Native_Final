@@ -17,19 +17,26 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Set up environment
+    - name: Set up Docker Compose
       run: |
         docker-compose build
         docker-compose up -d
+
+    - name: Wait for services to be ready
+      run: |
+        # Adjust the sleep time as needed to ensure services are ready
+        sleep 5
+
+    - name: Run migrations and tests with coverage
+      run: |
         docker-compose exec web python manage.py makemigrations
         docker-compose exec web python manage.py migrate
-        docker-compose exec web python manage.py test web_cn
-
-    - name: Generate coverage report
+    
+    - name: Generate Coverage Report
       run: |
-        docker-compose exec web python manage.py test web_cn
-        # docker-compose exec web coverage run manage.py test web_cn
-        # docker-compose exec web coverage report
+        docker-compose exec web coverage run --source='.' manage.py test web_cn
+        docker-compose exec web coverage report
       working-directory: ./mysite
 
-
+    - name: Tear down Docker Compose
+      run: docker-compose down
