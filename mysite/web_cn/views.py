@@ -165,12 +165,19 @@ def add_order(request):
             attachment = None
             logger.info("No attachment found in request.")
 
+        if priority == '特急單':
+            current_priority = 10
+        elif priority == '急單':
+            current_priority = 20
+        elif priority == '一般':
+            current_priority = 30
+
         try:
             new_order = require_info(
                 factory=factory,
                 priority=priority,
                 lab=lab,
-                current_priority='10',
+                current_priority=current_priority,
                 status='進行中',
                 attachment=attachment
             )
