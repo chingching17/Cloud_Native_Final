@@ -29,13 +29,13 @@ jobs:
 
     - name: Run migrations and tests with coverage
       run: |
-        docker-compose exec web python manage.py makemigrations
-        docker-compose exec web python manage.py migrate
+        docker-compose exec -T web python manage.py makemigrations
+        docker-compose exec -T web python manage.py migrate
     
     - name: Generate Coverage Report
       run: |
-        docker-compose exec web coverage run --source='.' manage.py test web_cn
-        docker-compose exec web coverage report
+        docker-compose exec -T web coverage run --source='.' manage.py test web_cn
+        docker-compose exec -T web coverage report
       working-directory: ./mysite
 
     - name: Tear down Docker Compose
