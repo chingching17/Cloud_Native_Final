@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: mysite-container
-        image: ghcr.io/kuenway/mysite:latest
+        image: ghcr.io/chingching17/mysite:latest
         ports:
         - containerPort: 8000
         resources:
@@ -111,7 +111,7 @@ spec:
     spec:
       containers:
         - name: celery-container
-          image: ghcr.io/kuenway/mysite:latest
+          image: ghcr.io/chingching17/mysite:latest
           env:
             - name: CELERY_BROKER_URL
               value: redis://redis:6379/0
