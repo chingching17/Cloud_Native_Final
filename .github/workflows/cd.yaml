@@ -1,10 +1,10 @@
 name: CD
 
-on: [push]
-  # pull_request:
-  #   types: [closed]
-    # branches:
-    #   - main
+on: 
+  pull_request:
+    types: [closed]
+    branches:
+      - main
   
 
 jobs:
@@ -31,10 +31,9 @@ jobs:
 
     - name: Build & Push latest image - mysite
       run: |
-        # docker buildx build -t ghcr.io/chingching17/mysite:latest -f Dockerfile .
-        docker build -t ghcr.io/chingching17/mysite:${GITHUB_SHA} .
+        docker buildx build -t ghcr.io/chingching17/mysite:latest -f Dockerfile .
         echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io -u USERNAME --password-stdin
-        docker push ghcr.io/chingching17/mysite:${GITHUB_SHA}
+        docker push ghcr.io/chingching17/mysite:latest
       working-directory: ./mysite
 
     - name: Deploy to GKE
