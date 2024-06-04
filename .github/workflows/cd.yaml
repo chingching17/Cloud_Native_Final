@@ -38,7 +38,11 @@ jobs:
 
     - name: Deploy to GKE
       run: |
-        kubectl delete pod,deploy,svc,ingress --all
+        # kubectl delete pod,deploy,svc,ingress --all
+        kubectl delete pods --all
+        kubectl delete deployments --all
+        kubectl delete svc --all --selector='!component=kubernetes'
+        kubectl delete ingress --all
         kubectl apply -f ./k8s/deploys.yaml
         kubectl apply -f ./k8s/services.yaml
         kubectl apply -f ./k8s/ingress.yaml
