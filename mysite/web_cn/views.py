@@ -4,12 +4,11 @@ from django.db import connection
 from django.contrib import messages
 
 from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
-from django.core.mail import send_mail
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest
 import json
@@ -182,6 +181,20 @@ def add_order(request):
                 attachment=attachment
             )
             new_order.save()
+
+            try:
+                lab_group = Group.objects.get(name=lab)
+                lab_users = User.objects.filter(groups=lab_group)
+                if len(lab_users) == 0:
+                    raise ValueError
+                lab_emails = [user.email for user in lab_users]
+                subject = 'New Order Added'
+                message = f"New order with ID {new_order.req_id} added by user {request.user.username}"
+                for email in lab_emails:
+                    send_notification(email, subject, message)
+            except Exception as e:
+                logger.info(f'No user in {lab}, failed to send email')
+                
             logger.info(f"New order created: {new_order.req_id} by user {request.user.username}")
             return JsonResponse({'success': True}, status=201)
         except Exception as e:
@@ -363,16 +376,6 @@ def view_logs(request):
         'reverse_order': reverse_order,
     })
 
-# # feat/2approval
-# def approve_task(request, task_id):
-#     task = get_object_or_404(Task, id=task_id)
-#     if task.approval > 0:
-#         task.approval -= 1
-#         if task.approval == 0:
-#             task.is_completed = True
-#         task.save()
-#     return JsonResponse({'approval': task.approval, 'is_completed': task.is_completed})
-
 @csrf_exempt
 @login_required
 def submit_order(request):
@@ -390,6 +393,19 @@ def submit_order(request):
                 task.is_submitted = True
                 task.submitted_by = request.user
                 task.save()
+
+                try:
+                    fab_group = Group.objects.get(name=task.factory)
+                    fab_users = User.objects.filter(groups=fab_group)
+                    if len(fab_users) == 0:
+                        raise ValueError
+                    fab_emails = [user.email for user in fab_users]
+                    subject = f"Order is waiting for approval"
+                    message = f"Order with ID {request_id} submitted by user {request.user.username} is waiting for approval."
+                    for email in fab_emails:
+                        send_notification(email, subject, message)
+                except Exception as e:
+                    logger.info(f'No user in {task.factory}, failed to send email')
 
                 logger.info(f"Order with ID {request_id} submitted by user {request.user.username}")
 
