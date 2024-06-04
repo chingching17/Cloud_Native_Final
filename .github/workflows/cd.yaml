@@ -31,10 +31,10 @@ jobs:
 
     - name: Build & Push latest image - mysite
       run: |
-        docker buildx build -t ghcr.io/chingching17/mysite:latest -f Dockerfile .
-        # docker build -t ghcr.io/chingching17/mysite:${GITHUB_SHA} .
+        # docker buildx build -t ghcr.io/chingching17/mysite:latest -f Dockerfile .
+        docker build -t ghcr.io/chingching17/mysite:${GITHUB_SHA} .
         echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io -u USERNAME --password-stdin
-        docker push ghcr.io/chingching17/mysite:latest
+        docker push ghcr.io/chingching17/mysite:${GITHUB_SHA}
       working-directory: ./mysite
 
     - name: Deploy to GKE
