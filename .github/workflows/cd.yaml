@@ -39,15 +39,15 @@ jobs:
     - name: Deploy to GKE
       run: |
         # kubectl delete pod,deploy,svc,ingress --all
-        kubectl delete pods --all
-        kubectl delete deployments --all
-        # kubectl delete svc --all --selector='!component=kubernetes'
-        kubectl get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
-        for svc in $(kubectl get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'); do
-          if [ "$svc" != "kubernetes" ]; then
-            kubectl delete svc $svc
-          fi
-        done
+        # kubectl delete pods --all
+        # kubectl delete deployments --all
+        # # kubectl delete svc --all --selector='!component=kubernetes'
+        # kubectl get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+        # for svc in $(kubectl get svc -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'); do
+        #   if [ "$svc" != "kubernetes" ]; then
+        #     kubectl delete svc $svc
+        #   fi
+        # done
         kubectl delete ingress --all
         kubectl apply -f ./k8s/deploys.yaml
         kubectl apply -f ./k8s/services.yaml
